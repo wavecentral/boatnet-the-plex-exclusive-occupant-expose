@@ -7,6 +7,13 @@
 <meta name="description" content="An investigation into a cryptomining crew that hijacked a home Plex server through the Plex2Shell exploit chain, dug in six layers deep, and fought off a rival gang for control of the machine.">
 <meta property="og:title" content="Boatnet: The Plex Exclusive Occupant">
 <meta property="og:description" content="How a cryptomining crew hijacked a home Plex server, dug in six layers deep, and fought a rival gang for the machine.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://wavecentral.github.io/boatnet-the-plex-exclusive-occupant-expose/">
+<meta property="og:image" content="https://wavecentral.github.io/boatnet-the-plex-exclusive-occupant-expose/images/boatnet-linkedin.png">
+<meta property="og:image:width" content="1920">
+<meta property="og:image:height" content="1080">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wavecentral.github.io/boatnet-the-plex-exclusive-occupant-expose/images/boatnet-linkedin.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,800;1,8..60,400&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -40,7 +47,11 @@
   .dek{font-size:clamp(20px,2.6vw,25px);color:var(--ink-2);line-height:1.45;margin:0 0 26px;max-width:760px}
   .byline{font-family:var(--sans);font-size:14px;color:var(--ink-3);border-top:1px solid var(--rule);padding-top:14px}
   .byline span+span::before{content:" · "}
+  figure.lead{max-width:1100px;margin:0 auto 56px;padding:0 16px}
+  figure.lead img{display:block;width:100%;height:auto;aspect-ratio:16/9;border-radius:4px;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+  figure.lead figcaption{font-family:var(--sans);font-size:13px;color:var(--ink-3);margin-top:10px}
   article{max-width:680px;margin:0 auto;padding:0 16px 80px}
+  article>p:first-of-type{display:flow-root}
   article>p:first-of-type::first-letter{float:left;font-size:4.4em;line-height:.82;font-weight:800;padding:6px 10px 0 0;color:var(--accent)}
   h2{font-family:var(--sans);font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:64px 0 6px}
   h3{font-size:30px;line-height:1.2;margin:0 0 18px;font-weight:800}
@@ -90,6 +101,8 @@
   <p class="dek">A cryptomining crew broke into a home media server through Plex's newest critical flaw, dug in six layers deep, and spent the night fighting off a rival gang for the machine. Nobody noticed for almost fourteen hours. Here is how it worked.</p>
   <div class="byline"><span>Reconstructed from 426 forensic artifacts</span><span>All times CDT</span><span>Victim identifiers removed</span></div>
 </header>
+
+<figure class="lead"><img src="images/boatnet-hero.jpg" width="1920" height="1080" alt="A terminal process list. The top row, highlighted in red, shows a process named ksoftirqd/0 owned by the plex user, using 398 percent CPU and running from /tmp/.cache/ksoftirqd. Below it are disguised kthreadd and PlexScriptHost processes, and at the bottom the real root-owned ksoftirqd/0 kernel thread at 0 percent."><figcaption>The process table at the moment of discovery, 11:30 CDT, October 28, 2026. The real kernel thread sits at the bottom, idle.</figcaption></figure>
 
 <article>
 

@@ -1,0 +1,50 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,800;1,8..60,400&family=Inter:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<style>
+body{background:#f7f4ee;font-family:Inter,sans-serif;color:#1c1b19;position:relative}
+body::before{content:"";position:absolute;left:0;top:0;bottom:0;width:18px;background:#b3261e}
+.l{position:absolute;left:120px;top:96px;width:900px}
+.k{color:#b3261e;font-weight:700;font-size:21px;letter-spacing:.2em;text-transform:uppercase}
+h1{font-family:"Source Serif 4",serif;font-weight:800;font-size:150px;line-height:.95;letter-spacing:-.03em;margin:26px 0 8px}
+h2{font-family:"Source Serif 4",serif;font-style:italic;font-weight:400;font-size:66px;line-height:1.05;color:#4a4740;margin-bottom:38px}
+p{font-family:"Source Serif 4",serif;font-size:31px;line-height:1.42;color:#4a4740;max-width:840px}
+.stats{position:absolute;left:120px;bottom:150px;display:flex;gap:0;border:1px solid #ddd6c8;background:#ddd6c8}
+.s{background:#fffdf8;padding:22px 30px;margin-right:1px;min-width:200px}
+.s b{display:block;font-family:"Source Serif 4",serif;font-weight:800;font-size:52px;line-height:1.05}
+.s span{font-size:18px;color:#7a766c}
+.url{position:absolute;left:120px;bottom:70px;font-size:22px;color:#7a766c;letter-spacing:.02em}
+.url b{color:#b3261e}
+.term{position:absolute;right:-60px;top:250px;width:960px;transform:rotate(-2deg)}
+.q{position:absolute;right:110px;bottom:120px;width:640px;text-align:right;font-family:"Source Serif 4",serif}
+.q blockquote{font-style:italic;font-size:54px;line-height:1.1;color:#1c1b19}
+.q blockquote::before{content:"";display:block;width:70px;height:3px;background:#b3261e;margin:0 0 22px auto}
+.q cite{display:block;font-family:Inter,sans-serif;font-style:normal;font-size:18px;letter-spacing:.14em;text-transform:uppercase;color:#7a766c;margin-top:16px}
+.body{font-size:21px;padding:26px 34px}
+.bad{margin:0 -34px;padding:0 34px}
+.cve{position:absolute;right:110px;top:120px;font-family:"JetBrains Mono",monospace;font-size:19px;color:#7a766c;text-align:right;line-height:1.6}
+.cve b{color:#b3261e}
+</style></head><body>
+<div class="cve"><b>PLEX2SHELL</b><br>CVE-2026-96652 · 96654 · 96655 · 96656</div>
+<div class="l">
+<div class="k">Investigation · Incident IR-2026-1028</div>
+<h1>Boatnet</h1>
+<h2>The Plex Exclusive Occupant</h2>
+<p>How a cryptomining crew hijacked a home Plex server, dug in six layers deep, and fought a rival gang for the machine, all for a few cents of Monero.</p>
+</div>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>ps --sort=-%cpu</span></div>
+<div class="body"><span class="h">USER  %CPU  COMMAND         EXE</span>
+<span class="bad">plex  <b>398</b>   <b>ksoftirqd/0</b>     /tmp/.cache/ksoftirqd</span>plex  14.9  CrashUploader   ~plex/CrashUploader
+plex  1.0   PlexScriptHost  ~plex/PlexScriptHost
+plex  0.9   [kthreadd]      /tmp/.cache/.cpuhp690
+plex  0.5   [kthreadd]      /dev/shm/.b1327455
+<span class="dim">root  0.0   ksoftirqd/0     —</span></div></div>
+<div class="stats">
+<div class="s"><b>13h 45m</b><span>undetected</span></div>
+<div class="s"><b>6</b><span>persistence layers</span></div>
+<div class="s"><b>116</b><span>polymorphic copies</span></div>
+<div class="s"><b>0</b><span>alerts fired</span></div>
+</div>
+<div class="q"><blockquote>“Keep ksoftirqd (ours).”</blockquote><cite>— comment in the boatnet dropper</cite></div>
+<div class="url"><b>wavecentral.github.io</b>/boatnet-the-plex-exclusive-occupant-expose</div>
+</body></html>
